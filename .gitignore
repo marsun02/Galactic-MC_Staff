@@ -1,5 +1,17 @@
 # Compiled class file
+galacticmc_staff/target/
+target/
+**/target/
 *.class
+
+# IntelliJ / VS Code / Eclipse settings
+.idea/
+.vscode/
+*.iml
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
 
 # Log file
 *.log
