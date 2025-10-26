@@ -1,4 +1,4 @@
-package com.marsun02;
+package com.marsun02.plugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
