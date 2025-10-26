@@ -1,6 +1,7 @@
 package com.marsun02.plugin.staffChat;
 
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -12,9 +13,9 @@ import net.md_5.bungee.api.ChatColor;
 
 public class StaffChatListener implements Listener {
 
-    private final Set<Player> staffChatToggled;
+    private final Set<UUID> staffChatToggled;
 
-    public StaffChatListener(Set<Player> staffChatToggled) {
+    public StaffChatListener(Set<UUID> staffChatToggled) {
         this.staffChatToggled = staffChatToggled;
     }
 
@@ -24,7 +25,7 @@ public class StaffChatListener implements Listener {
         String message = event.getMessage();
 
         // Check if the player has staff chat mode enabled or using shortcut "#"
-        if (staffChatToggled.contains(player) || message.startsWith("#")) {
+        if (staffChatToggled.contains(player.getUniqueId()) || message.startsWith("#")) {
             
             // If they use shortcut "#", but don't have permission, this will deny them
             if (!player.hasPermission("server.staff.staffchat")) {
