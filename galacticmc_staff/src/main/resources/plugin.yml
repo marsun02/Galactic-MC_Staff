@@ -2,4 +2,14 @@ name: Galactic-MC_Staff
 version: 1.0
 main: com.marsun02.plugin.Main
 api-version: 1.21
+author: Marsun02
+commands:
+  staffchat:
+    description: Toggle Staff Chat mode
+    usage: /<command>
+    permission: server.staff.staffchat
+permissions:
+  server.staff.staffchat:
+    description: Allows the use of the Staff Chat command
+    default: false
 
