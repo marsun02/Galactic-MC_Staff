@@ -7,7 +7,6 @@ commands:
   staffchat:
     description: Toggle Staff Chat mode
     usage: /<command>
-    permission: server.staff.staffchat
   ban:
     description: Ban a player temporarily or permanently
     usage: /<command> <player> [amount] [seconds|minutes|hours|days] [reason]
