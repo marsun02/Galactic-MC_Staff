@@ -50,7 +50,7 @@ public class Main extends JavaPlugin {
         // Register StaffChat listener
         getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers, mutedReasons), this);
         // Register warn listener
-        getServer().getPluginManager().registerEvents(new WarnListener(warnedPlayers, warnedReasons), this);
+        getServer().getPluginManager().registerEvents(new WarnListener(warnedPlayers, warnedReasons, this), this);
 
         getLogger().info("Galactic-MC_Staff er aktivert");
     }

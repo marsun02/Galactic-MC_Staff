@@ -60,7 +60,7 @@ public class WarnCommand implements CommandExecutor {
         if (target.isOnline()) {
             org.bukkit.entity.Player online = Bukkit.getPlayerExact(canonicalName);
             if (online != null) {
-                online.sendMessage(ChatColor.YELLOW + "You have been warned: " + ChatColor.GRAY + reason + ChatColor.YELLOW + " (expires in 7 days)");
+                online.sendMessage(ChatColor.RED + "You have been warned: " + ChatColor.GRAY + reason + ChatColor.RED + " (expires in 7 days)");
             }
         }
         return true;
