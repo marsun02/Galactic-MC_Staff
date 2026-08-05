@@ -29,7 +29,9 @@ public class BanCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         long maxAllowed = getMaxAllowedSeconds(sender);
         if (maxAllowed < 0) {
-            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            if (!(sender instanceof ConsoleCommandSender)) {
+                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            }
             return true;
         }
 

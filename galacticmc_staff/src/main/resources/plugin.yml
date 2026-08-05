@@ -11,11 +11,9 @@ commands:
   ban:
     description: Ban a player temporarily or permanently
     usage: /<command> <player> [amount] [seconds|minutes|hours|days] [reason]
-    permission: server.staff.staffmember
   unban:
     description: Unban a player
     usage: /<command> <player>
-    permission: server.staff.staffmember
 permissions:
   server.staff.staffchat:
     description: Allows the use of the Staff Chat command
