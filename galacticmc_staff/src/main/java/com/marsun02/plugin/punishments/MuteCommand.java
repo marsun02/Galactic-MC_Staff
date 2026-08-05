@@ -69,8 +69,7 @@ public class MuteCommand implements CommandExecutor {
         mutedPlayers.put(targetKey, expiry);
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
-        String announce = ChatColor.GOLD + "[Mute] " + ChatColor.WHITE + sender.getName() + ChatColor.GOLD + " muted " + ChatColor.WHITE + targetName + ChatColor.GOLD + " " + durationText + " for: " + ChatColor.GRAY + reason;
-        sender.sendMessage(announce);
+        String announce = ChatColor.RED + "[Mute] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " muted " + ChatColor.WHITE + targetName + ChatColor.RED + " " + durationText + " for: " + ChatColor.GRAY + reason;
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {
