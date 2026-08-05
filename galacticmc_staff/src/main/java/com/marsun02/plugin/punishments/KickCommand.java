@@ -40,14 +40,12 @@ public class KickCommand implements CommandExecutor {
         String kickMessage = ChatColor.RED + "You have been kicked from the server. Reason: " + ChatColor.GRAY + reason;
         target.kickPlayer(kickMessage);
 
-        String announce = ChatColor.YELLOW + "[Kick] " + ChatColor.WHITE + sender.getName() + ChatColor.YELLOW + " kicked " + ChatColor.WHITE + target.getName() + ChatColor.YELLOW + ". Reason: " + ChatColor.GRAY + reason;
+        String announce = ChatColor.RED + "[Kick] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " kicked " + ChatColor.WHITE + target.getName() + ChatColor.RED + ". Reason: " + ChatColor.GRAY + reason;
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {
                 player.sendMessage(announce);
             }
         });
-
-        sender.sendMessage(ChatColor.GREEN + "Successfully kicked " + ChatColor.WHITE + target.getName() + ChatColor.GREEN + ".");
         return true;
     }
 }

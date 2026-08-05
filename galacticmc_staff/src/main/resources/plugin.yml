@@ -7,13 +7,12 @@ commands:
   staffchat:
     description: Toggle Staff Chat mode
     usage: /<command>
-  ban:
-    description: Ban a player temporarily or permanently
-    usage: /<command> <player> [amount] [seconds | minutes | hours | days] [reason]
   kick:
     description: Kick a player from the server
     usage: /<command> <player> [reason]
-    permission: server.staff.staffmember
+  ban:
+    description: Ban a player temporarily or permanently
+    usage: /<command> <player> [amount] [seconds | minutes | hours | days] [reason]
   unban:
     description: Unban a player
     usage: /<command> <player>

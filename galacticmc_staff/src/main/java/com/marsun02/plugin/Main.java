@@ -35,8 +35,8 @@ public class Main extends JavaPlugin {
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
         
         // Register punishment commands
-        getCommand("ban").setExecutor(new BanCommand());
         getCommand("kick").setExecutor(new KickCommand());
+        getCommand("ban").setExecutor(new BanCommand());
         getCommand("unban").setExecutor(new UnbanCommand());
         getCommand("mute").setExecutor(new MuteCommand(mutedPlayers, mutedReasons));
         getCommand("unmute").setExecutor(new UnmuteCommand(mutedPlayers, mutedReasons));
