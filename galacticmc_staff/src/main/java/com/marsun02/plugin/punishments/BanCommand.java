@@ -92,7 +92,6 @@ public class BanCommand implements CommandExecutor {
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
         String announce = ChatColor.RED + "[Ban] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " banned " + ChatColor.WHITE + targetName + ChatColor.RED + " " + durationText + " for: " + ChatColor.GRAY + reason;
-        sender.sendMessage(announce);
 
         // Broadcast to online staff members with the staffmember permission
         Bukkit.getOnlinePlayers().forEach(p -> {
