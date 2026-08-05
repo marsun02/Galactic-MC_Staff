@@ -41,23 +41,21 @@ public class BanCommand implements CommandExecutor {
         long durationSeconds = -1L;
         int reasonIndex = 1;
 
-        // If only /ban <player> -> default to caller's max allowed (helper=14d, mod=30d, admin/owner=permanent)
         if (args.length == 1) {
-            if (maxAllowed == Long.MAX_VALUE) {
-                durationSeconds = -1L; // permanent
-            } else {
-                durationSeconds = maxAllowed;
-            }
-            reasonIndex = 1;
+            // /ban <player>
+            durationSeconds = maxAllowed == Long.MAX_VALUE ? -1L : maxAllowed;
         } else if (args.length >= 3 && isInteger(args[1]) && isUnit(args[2])) {
+            // /ban <player> <amount> <unit> [reason]
             durationSeconds = parseDurationSeconds(args[1], args[2]);
             reasonIndex = 3;
-        } else if (args.length >= 2) {
-            String singleToken = args[1];
-            if (isDurationToken(singleToken)) {
-                durationSeconds = parseDurationSecondsToken(singleToken);
-                reasonIndex = 2;
-            }
+        } else if (args.length >= 2 && isDurationToken(args[1])) {
+            // /ban <player> <durationToken> [reason]
+            durationSeconds = parseDurationSecondsToken(args[1]);
+            reasonIndex = 2;
+        } else {
+            // /ban <player> <reason...> -> use max allowed duration for role
+            durationSeconds = maxAllowed == Long.MAX_VALUE ? -1L : maxAllowed;
+            reasonIndex = 1;
         }
 
         String reason = args.length > reasonIndex
