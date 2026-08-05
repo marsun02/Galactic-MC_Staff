@@ -12,6 +12,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
@@ -28,7 +29,9 @@ public class BanCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         long maxAllowed = getMaxAllowedSeconds(sender);
         if (maxAllowed < 0) {
-            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            if (!(sender instanceof ConsoleCommandSender)) {
+                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            }
             return true;
         }
 
@@ -101,6 +104,7 @@ public class BanCommand implements CommandExecutor {
     }
 
     private long getMaxAllowedSeconds(CommandSender sender) {
+        if (sender instanceof ConsoleCommandSender) return Long.MAX_VALUE;
         if (sender.hasPermission(PERM_OWNER)) return Long.MAX_VALUE;
         if (sender.hasPermission(PERM_ADMIN)) return Long.MAX_VALUE; // admin can permanent-ban
         if (sender.hasPermission(PERM_MOD)) return 30L * 24L * 60L * 60L; // 30 days
