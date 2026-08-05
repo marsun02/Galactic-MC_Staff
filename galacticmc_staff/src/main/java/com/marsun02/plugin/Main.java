@@ -9,6 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.marsun02.plugin.punishments.BanCommand;
+import com.marsun02.plugin.punishments.UnbanCommand;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
 
@@ -26,6 +27,8 @@ public class Main extends JavaPlugin {
         
         // Register ban command
         getCommand("ban").setExecutor(new BanCommand());
+        // Register unban command
+        getCommand("unban").setExecutor(new UnbanCommand());
         
         // Register StaffChat listener
         getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled), this);
