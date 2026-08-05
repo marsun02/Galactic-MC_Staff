@@ -18,12 +18,16 @@ import net.md_5.bungee.api.ChatColor;
 
 public class BanCommand implements CommandExecutor {
 
-    private static final String PERMISSION = "server.staff.staffmember";
+    private static final String PERM_HELPER = "server.staff.helper";
+    private static final String PERM_MOD = "server.staff.mod";
+    private static final String PERM_ADMIN = "server.staff.admin";
+    private static final String PERM_OWNER = "server.staff.owner";
     private static final Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)\\s*(s|sec|secs|seconds|m|min|mins|minutes|h|hr|hrs|hours|d|day|days)$", Pattern.CASE_INSENSITIVE);
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission(PERMISSION)) {
+        long maxAllowed = getMaxAllowedSeconds(sender);
+        if (maxAllowed < 0) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
@@ -54,12 +58,21 @@ public class BanCommand implements CommandExecutor {
 
         @SuppressWarnings("deprecation")
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
-        if (!target.hasPlayedBefore() && !target.isOnline()) {
-            sender.sendMessage(ChatColor.RED + "Player " + targetName + " was not found.");
-            return true;
+
+        boolean permanent = durationSeconds <= 0;
+        if (permanent) {
+            if (maxAllowed != Long.MAX_VALUE) {
+                sender.sendMessage(ChatColor.RED + "You are not allowed to issue permanent bans.");
+                return true;
+            }
+        } else {
+            if (maxAllowed != Long.MAX_VALUE && durationSeconds > maxAllowed) {
+                sender.sendMessage(ChatColor.RED + "You may only ban up to " + formatDuration(maxAllowed) + ".");
+                return true;
+            }
         }
 
-        Date expires = durationSeconds > 0 ? Date.from(Instant.now().plusSeconds(durationSeconds)) : null;
+        Date expires = !permanent ? Date.from(Instant.now().plusSeconds(durationSeconds)) : null;
         Bukkit.getBanList(BanList.Type.PROFILE).addBan(targetName, reason, expires, sender.getName());
 
         if (target.isOnline()) {
@@ -72,6 +85,14 @@ public class BanCommand implements CommandExecutor {
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
         sender.sendMessage(ChatColor.RED + "Player " + targetName + " has been banned " + durationText + " for: " + ChatColor.GRAY + reason);
         return true;
+    }
+
+    private long getMaxAllowedSeconds(CommandSender sender) {
+        if (sender.hasPermission(PERM_OWNER)) return Long.MAX_VALUE;
+        if (sender.hasPermission(PERM_ADMIN)) return Long.MAX_VALUE; // admin can permanent-ban
+        if (sender.hasPermission(PERM_MOD)) return 30L * 24L * 60L * 60L; // 30 days
+        if (sender.hasPermission(PERM_HELPER)) return 14L * 24L * 60L * 60L; // 14 days
+        return -1L; // no permission
     }
 
     static long parseDurationSeconds(String amountText, String unitText) {
