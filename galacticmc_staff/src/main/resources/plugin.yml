@@ -13,6 +13,9 @@ commands:
   unban:
     description: Unban a player
     usage: /<command> <player>
+  mute:
+    description: Mute a player from public chat
+    usage: /<command> <player> [amount] [seconds|minutes|hours|days] [reason]
 permissions:
   server.staff.staffchat:
     description: Allows the use of the Staff Chat command
