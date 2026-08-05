@@ -9,19 +9,22 @@ commands:
     usage: /<command>
   ban:
     description: Ban a player temporarily or permanently
-    usage: /<command> <player> [amount] [seconds|minutes|hours|days] [reason]
+    usage: /<command> <player> [amount] [seconds | minutes | hours | days] [reason]
   unban:
     description: Unban a player
     usage: /<command> <player>
+  mute:
+    description: Mute a player from public chat
+    usage: /<command> <player> [amount] [seconds | minutes | hours | days] [reason]
 permissions:
+  server.staff.staffmember:
+    description: Indicates that the player is a staff member
+    default: false
   server.staff.staffchat:
     description: Allows the use of the Staff Chat command
     default: false
   server.staff.staffchat.others:
     description: Allows the use of the Staff Chat command on other players
-    default: false
-  server.staff.staffmember:
-    description: Indicates that the player is a staff member
     default: false
   server.staff.helper:
     description: Helper role

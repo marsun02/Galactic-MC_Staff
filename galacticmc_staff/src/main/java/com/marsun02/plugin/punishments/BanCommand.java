@@ -143,7 +143,7 @@ public class BanCommand implements CommandExecutor {
         };
     }
 
-    private boolean isInteger(String value) {
+    public static boolean isInteger(String value) {
         try {
             Long.parseLong(value);
             return true;
@@ -152,7 +152,7 @@ public class BanCommand implements CommandExecutor {
         }
     }
 
-    private boolean isUnit(String value) {
+    public static boolean isUnit(String value) {
         String unit = value.toLowerCase();
         return switch (unit) {
             case "second", "seconds", "sec", "secs", "minute", "minutes", "min", "mins", "hour", "hours", "hr", "hrs", "day", "days" -> true;
@@ -160,7 +160,7 @@ public class BanCommand implements CommandExecutor {
         };
     }
 
-    private boolean isDurationToken(String value) {
+    public static boolean isDurationToken(String value) {
         return DURATION_PATTERN.matcher(value.trim()).matches();
     }
 

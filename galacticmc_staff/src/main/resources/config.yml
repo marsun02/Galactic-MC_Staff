@@ -1,1 +1,6 @@
 staffchat-enabled: []
+
+# Muted players storage. Keys are lowercase player names.
+# expiry: milliseconds since epoch, use -1 for permanent.
+# reason: string explaining the mute.
+muted: {}
