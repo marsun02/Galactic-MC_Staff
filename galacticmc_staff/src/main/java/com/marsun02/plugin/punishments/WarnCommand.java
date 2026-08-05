@@ -60,7 +60,15 @@ public class WarnCommand implements CommandExecutor {
         if (target.isOnline()) {
             org.bukkit.entity.Player online = Bukkit.getPlayerExact(canonicalName);
             if (online != null) {
-                online.sendMessage(ChatColor.RED + "You have been warned: " + ChatColor.GRAY + reason + ChatColor.RED + " (expires in 7 days)");
+                String title = ChatColor.RED + "You have been warned!";
+                String subtitle = ChatColor.GRAY + "Reason: " + reason + ChatColor.RED + " (expires in 7 days)";
+                try {
+                    online.sendTitle(title, subtitle, 10, 70, 20);
+                } catch (NoSuchMethodError e) {
+                    // Fallback for older versions of Minecraft that don't support sendTitle
+                    online.sendMessage(title);
+                    online.sendMessage(subtitle);
+                }
             }
         }
         return true;
