@@ -41,7 +41,15 @@ public class BanCommand implements CommandExecutor {
         long durationSeconds = -1L;
         int reasonIndex = 1;
 
-        if (args.length >= 3 && isInteger(args[1]) && isUnit(args[2])) {
+        // If only /ban <player> -> default to caller's max allowed (helper=14d, mod=30d, admin/owner=permanent)
+        if (args.length == 1) {
+            if (maxAllowed == Long.MAX_VALUE) {
+                durationSeconds = -1L; // permanent
+            } else {
+                durationSeconds = maxAllowed;
+            }
+            reasonIndex = 1;
+        } else if (args.length >= 3 && isInteger(args[1]) && isUnit(args[2])) {
             durationSeconds = parseDurationSeconds(args[1], args[2]);
             reasonIndex = 3;
         } else if (args.length >= 2) {
@@ -83,7 +91,15 @@ public class BanCommand implements CommandExecutor {
         }
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
-        sender.sendMessage(ChatColor.RED + "Player " + targetName + " has been banned " + durationText + " for: " + ChatColor.GRAY + reason);
+        String announce = ChatColor.RED + "[Ban] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " banned " + ChatColor.WHITE + targetName + ChatColor.RED + " " + durationText + " for: " + ChatColor.GRAY + reason;
+        sender.sendMessage(announce);
+
+        // Broadcast to online staff members with the staffmember permission
+        Bukkit.getOnlinePlayers().forEach(p -> {
+            if (p.hasPermission("server.staff.staffmember")) {
+                p.sendMessage(announce);
+            }
+        });
         return true;
     }
 
