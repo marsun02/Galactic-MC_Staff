@@ -16,7 +16,9 @@ permissions:
   server.staff.staffchat:
     description: Allows the use of the Staff Chat command
     default: false
+  server.staff.staffchat.others:
+    description: Allows the use of the Staff Chat command on other players
+    default: false
   server.staff.staffmember:
     description: Allows the use of the ban command
     default: false
-

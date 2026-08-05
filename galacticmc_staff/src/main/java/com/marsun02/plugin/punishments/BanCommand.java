@@ -65,12 +65,12 @@ public class BanCommand implements CommandExecutor {
         if (target.isOnline()) {
             Player onlinePlayer = Bukkit.getPlayerExact(targetName);
             if (onlinePlayer != null) {
-                onlinePlayer.kickPlayer(ChatColor.RED + "You have been banned: " + reason);
+                onlinePlayer.kickPlayer(ChatColor.RED + "You have been banned: " + ChatColor.GRAY + reason + ChatColor.RED + "\nDuration: " + ChatColor.GRAY +(expires != null ? formatDuration(durationSeconds) : "permanently"));
             }
         }
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
-        sender.sendMessage(ChatColor.GREEN + "Player " + targetName + " has been banned " + durationText + " for: " + reason);
+        sender.sendMessage(ChatColor.RED + "Player " + targetName + " has been banned " + durationText + " for: " + ChatColor.GRAY + reason);
         return true;
     }
 
