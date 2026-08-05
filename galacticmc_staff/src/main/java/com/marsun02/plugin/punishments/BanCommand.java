@@ -33,7 +33,7 @@ public class BanCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.RED + "Usage: /ban <player> [amount] [seconds|minutes|hours|days] [reason]");
+            sender.sendMessage(ChatColor.RED + "Usage: /ban <player> [amount] [seconds | minutes | hours | days] [reason]");
             return true;
         }
 
