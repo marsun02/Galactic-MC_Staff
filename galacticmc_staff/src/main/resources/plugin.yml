@@ -8,8 +8,29 @@ commands:
     description: Toggle Staff Chat mode
     usage: /<command>
     permission: server.staff.staffchat
+  ban:
+    description: Ban a player temporarily or permanently
+    usage: /<command> <player> [amount] [seconds|minutes|hours|days] [reason]
+    permission: server.staff.staffmember
 permissions:
   server.staff.staffchat:
     description: Allows the use of the Staff Chat command
     default: false
-
+  server.staff.staffchat.others:
+    description: Allows the use of the Staff Chat command on other players
+    default: false
+  server.staff.staffmember:
+    description: Indicates that the player is a staff member
+    default: false
+  server.staff.helper:
+    description: Helper role
+    default: false
+  server.staff.mod:
+    description: Moderator role
+    default: false
+  server.staff.admin:
+    description: Admin role
+    default: false
+  server.staff.owner:
+    description: Owner role - full permissions
+    default: false
