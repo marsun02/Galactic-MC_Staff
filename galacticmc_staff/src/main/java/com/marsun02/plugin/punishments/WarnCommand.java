@@ -47,7 +47,7 @@ public class WarnCommand implements CommandExecutor {
         warnedPlayers.put(targetKey, expiry);
         warnedReasons.put(targetKey, reason);
 
-        String announce = ChatColor.YELLOW + "[Warn] " + ChatColor.WHITE + sender.getName() + ChatColor.YELLOW + " warned " + ChatColor.WHITE + canonicalName + ChatColor.YELLOW + " for: " + ChatColor.GRAY + reason;
+        String announce = ChatColor.RED + "[Warn] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " warned " + ChatColor.WHITE + canonicalName + ChatColor.RED + " for: " + ChatColor.GRAY + reason;
 
         // Notify online staff
         Bukkit.getOnlinePlayers().forEach(player -> {
@@ -63,8 +63,6 @@ public class WarnCommand implements CommandExecutor {
                 online.sendMessage(ChatColor.YELLOW + "You have been warned: " + ChatColor.GRAY + reason + ChatColor.YELLOW + " (expires in 7 days)");
             }
         }
-
-        sender.sendMessage(ChatColor.GREEN + "Warned " + ChatColor.WHITE + canonicalName + ChatColor.GREEN + ".");
         return true;
     }
 }
