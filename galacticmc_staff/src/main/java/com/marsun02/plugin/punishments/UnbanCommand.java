@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -14,7 +15,7 @@ public class UnbanCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission(PERMISSION)) {
+        if (!(sender instanceof ConsoleCommandSender) && !sender.hasPermission(PERMISSION)) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
@@ -34,7 +35,7 @@ public class UnbanCommand implements CommandExecutor {
 
         banList.pardon(targetName);
 
-        String announce = ChatColor.GREEN + "[Unban] " + ChatColor.WHITE + sender.getName() + ChatColor.GREEN + " unbanned " + ChatColor.WHITE + targetName + ChatColor.GREEN + ".";
+        String announce = ChatColor.RED + "[Unban] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " unbanned " + ChatColor.WHITE + targetName + ChatColor.RED + ".";
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {
