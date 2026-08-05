@@ -14,6 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.marsun02.plugin.punishments.BanCommand;
 import com.marsun02.plugin.punishments.MuteCommand;
 import com.marsun02.plugin.punishments.UnbanCommand;
+import com.marsun02.plugin.punishments.UnmuteCommand;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
 
@@ -36,6 +37,7 @@ public class Main extends JavaPlugin {
         getCommand("ban").setExecutor(new BanCommand());
         getCommand("unban").setExecutor(new UnbanCommand());
         getCommand("mute").setExecutor(new MuteCommand(mutedPlayers, mutedReasons));
+        getCommand("unmute").setExecutor(new UnmuteCommand(mutedPlayers, mutedReasons));
         
         // Register StaffChat listener
         getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers, mutedReasons), this);
