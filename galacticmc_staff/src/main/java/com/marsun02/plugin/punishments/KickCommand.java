@@ -37,7 +37,7 @@ public class KickCommand implements CommandExecutor {
         }
 
         String reason = args.length > 1 ? String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)) : "No reason provided.";
-        String kickMessage = ChatColor.RED + "You have been kicked from the server. Reason: " + ChatColor.GRAY + reason;
+        String kickMessage = ChatColor.RED + "You have been kicked from the server. \nReason: " + ChatColor.GRAY + reason;
         target.kickPlayer(kickMessage);
 
         String announce = ChatColor.RED + "[Kick] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " kicked " + ChatColor.WHITE + target.getName() + ChatColor.RED + ". Reason: " + ChatColor.GRAY + reason;
