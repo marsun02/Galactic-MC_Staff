@@ -16,6 +16,8 @@ import com.marsun02.plugin.punishments.KickCommand;
 import com.marsun02.plugin.punishments.MuteCommand;
 import com.marsun02.plugin.punishments.UnbanCommand;
 import com.marsun02.plugin.punishments.UnmuteCommand;
+import com.marsun02.plugin.punishments.WarnCommand;
+import com.marsun02.plugin.punishments.WarnListener;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
 
@@ -23,6 +25,8 @@ public class Main extends JavaPlugin {
     private final Set<UUID> staffChatToggled = new HashSet<>();
     private final Map<String, Long> mutedPlayers = new HashMap<>();
     private final Map<String, String> mutedReasons = new HashMap<>();
+    private final Map<String, Long> warnedPlayers = new HashMap<>();
+    private final Map<String, String> warnedReasons = new HashMap<>();
     
     @Override
     public void onEnable(){
@@ -30,6 +34,7 @@ public class Main extends JavaPlugin {
         saveDefaultConfig();
         loadStaffChatStates();
         loadMutedPlayers();
+        loadWarnedPlayers();
 
         // Register StaffChat command
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
@@ -40,9 +45,12 @@ public class Main extends JavaPlugin {
         getCommand("unban").setExecutor(new UnbanCommand());
         getCommand("mute").setExecutor(new MuteCommand(mutedPlayers, mutedReasons));
         getCommand("unmute").setExecutor(new UnmuteCommand(mutedPlayers, mutedReasons));
+        getCommand("warn").setExecutor(new WarnCommand(warnedPlayers, warnedReasons));
         
         // Register StaffChat listener
         getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers, mutedReasons), this);
+        // Register warn listener
+        getServer().getPluginManager().registerEvents(new WarnListener(warnedPlayers, warnedReasons, this), this);
 
         getLogger().info("Galactic-MC_Staff er aktivert");
     }
@@ -51,6 +59,7 @@ public class Main extends JavaPlugin {
     public void onDisable() {
         saveStaffChatStates();
         saveMutedPlayers();
+        saveWarnedPlayers();
         getLogger().info("Galactic-MC_Staff er deaktivert!");
     }
 
@@ -96,6 +105,30 @@ public class Main extends JavaPlugin {
             long expiry = entry.getValue();
             config.set("muted." + name + ".expiry", expiry);
             config.set("muted." + name + ".reason", mutedReasons.getOrDefault(name, "No reason provided."));
+        }
+        saveConfig();
+    }
+    
+    private void loadWarnedPlayers() {
+        FileConfiguration config = getConfig();
+        ConfigurationSection section = config.getConfigurationSection("warns");
+        if (section == null) return;
+        for (String name : section.getKeys(false)) {
+            long expiry = config.getLong("warns." + name + ".expiry", -1L);
+            String reason = config.getString("warns." + name + ".reason", "No reason provided.");
+            warnedPlayers.put(name.toLowerCase(), expiry);
+            warnedReasons.put(name.toLowerCase(), reason);
+        }
+    }
+
+    private void saveWarnedPlayers() {
+        FileConfiguration config = getConfig();
+        config.set("warns", null);
+        for (var entry : warnedPlayers.entrySet()) {
+            String name = entry.getKey();
+            long expiry = entry.getValue();
+            config.set("warns." + name + ".expiry", expiry);
+            config.set("warns." + name + ".reason", warnedReasons.getOrDefault(name, "No reason provided."));
         }
         saveConfig();
     }

@@ -22,6 +22,9 @@ commands:
   unmute:
     description: Unmute a player
     usage: /<command> <player>
+  warn:
+    description: Warn a player (persists for 7 days)
+    usage: /<command> <player> <reason>
 permissions:
   server.staff.staffmember:
     description: Indicates that the player is a staff member
