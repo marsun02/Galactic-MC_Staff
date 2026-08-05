@@ -12,6 +12,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.marsun02.plugin.punishments.BanCommand;
+import com.marsun02.plugin.punishments.KickCommand;
 import com.marsun02.plugin.punishments.MuteCommand;
 import com.marsun02.plugin.punishments.UnbanCommand;
 import com.marsun02.plugin.punishments.UnmuteCommand;
@@ -34,6 +35,7 @@ public class Main extends JavaPlugin {
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
         
         // Register punishment commands
+        getCommand("kick").setExecutor(new KickCommand());
         getCommand("ban").setExecutor(new BanCommand());
         getCommand("unban").setExecutor(new UnbanCommand());
         getCommand("mute").setExecutor(new MuteCommand(mutedPlayers, mutedReasons));
