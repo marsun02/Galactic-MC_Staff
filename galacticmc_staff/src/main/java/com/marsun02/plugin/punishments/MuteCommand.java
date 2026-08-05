@@ -14,9 +14,11 @@ public class MuteCommand implements CommandExecutor {
 
     private static final String PERMISSION = "server.staff.staffmember";
     private final Map<String, Long> mutedPlayers;
+    private final Map<String, String> mutedReasons;
 
-    public MuteCommand(Map<String, Long> mutedPlayers) {
+    public MuteCommand(Map<String, Long> mutedPlayers, Map<String, String> mutedReasons) {
         this.mutedPlayers = mutedPlayers;
+        this.mutedReasons = mutedReasons;
     }
 
     @Override
@@ -67,6 +69,7 @@ public class MuteCommand implements CommandExecutor {
 
         long expiry = permanent ? -1L : System.currentTimeMillis() + durationSeconds * 1000L;
         mutedPlayers.put(targetKey, expiry);
+        mutedReasons.put(targetKey, reason);
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
         String announce = ChatColor.RED + "[Mute] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " muted " + ChatColor.WHITE + targetName + ChatColor.RED + " " + durationText + " for: " + ChatColor.GRAY + reason;
@@ -76,6 +79,19 @@ public class MuteCommand implements CommandExecutor {
                 player.sendMessage(announce);
             }
         });
+
+        // One-time on-screen title for the muted player if online
+        org.bukkit.entity.Player online = Bukkit.getPlayerExact(targetName);
+        if (online != null) {
+            String title = ChatColor.RED + "You are muted";
+            String subtitle = ChatColor.GRAY + reason + ChatColor.RED + " | " + ChatColor.GRAY + (permanent ? "permanently" : durationText);
+            try {
+                online.sendTitle(title, subtitle, 10, 60, 10);
+            } catch (NoSuchMethodError ignored) {
+                // Older server versions may not support titles; fall back to chat message
+                online.sendMessage(title + " - " + subtitle);
+            }
+        }
 
         return true;
     }

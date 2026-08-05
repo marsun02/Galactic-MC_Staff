@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.marsun02.plugin.punishments.BanCommand;
@@ -19,6 +20,7 @@ import com.marsun02.plugin.staffChat.StaffChatListener;
 public class Main extends JavaPlugin {
     private final Set<UUID> staffChatToggled = new HashSet<>();
     private final Map<String, Long> mutedPlayers = new HashMap<>();
+    private final Map<String, String> mutedReasons = new HashMap<>();
     
     @Override
     public void onEnable(){
@@ -33,10 +35,10 @@ public class Main extends JavaPlugin {
         // Register punishment commands
         getCommand("ban").setExecutor(new BanCommand());
         getCommand("unban").setExecutor(new UnbanCommand());
-        getCommand("mute").setExecutor(new MuteCommand(mutedPlayers));
+        getCommand("mute").setExecutor(new MuteCommand(mutedPlayers, mutedReasons));
         
         // Register StaffChat listener
-        getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers), this);
+        getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers, mutedReasons), this);
 
         getLogger().info("Galactic-MC_Staff er aktivert");
     }
@@ -71,25 +73,26 @@ public class Main extends JavaPlugin {
 
     private void loadMutedPlayers() {
         FileConfiguration config = getConfig();
-        List<String> entries = config.getStringList("muted-players");
-        for (String entry : entries) {
-            String[] split = entry.split(":", 2);
-            if (split.length != 2) continue;
-            try {
-                String name = split[0];
-                long expiry = Long.parseLong(split[1]);
-                mutedPlayers.put(name, expiry);
-            } catch (NumberFormatException ignored) {
-            }
+        ConfigurationSection section = config.getConfigurationSection("muted");
+        if (section == null) return;
+        for (String name : section.getKeys(false)) {
+            long expiry = config.getLong("muted." + name + ".expiry", -1L);
+            String reason = config.getString("muted." + name + ".reason", "No reason provided.");
+            mutedPlayers.put(name.toLowerCase(), expiry);
+            mutedReasons.put(name.toLowerCase(), reason);
         }
     }
 
     private void saveMutedPlayers() {
         FileConfiguration config = getConfig();
-        List<String> entries = mutedPlayers.entrySet().stream()
-            .map(entry -> entry.getKey() + ":" + entry.getValue())
-            .toList();
-        config.set("muted-players", entries);
+        // clear previous muted section
+        config.set("muted", null);
+        for (var entry : mutedPlayers.entrySet()) {
+            String name = entry.getKey();
+            long expiry = entry.getValue();
+            config.set("muted." + name + ".expiry", expiry);
+            config.set("muted." + name + ".reason", mutedReasons.getOrDefault(name, "No reason provided."));
+        }
         saveConfig();
     }
     

@@ -16,10 +16,12 @@ public class StaffChatListener implements Listener {
 
     private final Set<UUID> staffChatToggled;
     private final Map<String, Long> mutedPlayers;
+    private final Map<String, String> mutedReasons;
 
-    public StaffChatListener(Set<UUID> staffChatToggled, Map<String, Long> mutedPlayers) {
+    public StaffChatListener(Set<UUID> staffChatToggled, Map<String, Long> mutedPlayers, Map<String, String> mutedReasons) {
         this.staffChatToggled = staffChatToggled;
         this.mutedPlayers = mutedPlayers;
+        this.mutedReasons = mutedReasons;
     }
 
     @EventHandler
@@ -51,15 +53,17 @@ public class StaffChatListener implements Listener {
         if (isPlayerMuted(playerKey)) {
             event.setCancelled(true);
             long expiry = mutedPlayers.getOrDefault(playerKey, -1L);
+            String reason = mutedReasons.getOrDefault(playerKey, "No reason provided.");
             if (expiry < 0) {
-                player.sendMessage(ChatColor.RED + "You are muted permanently.");
+                player.sendMessage(ChatColor.RED + "You are muted permanently. Reason: " + ChatColor.GRAY + reason);
             } else {
                 long remaining = expiry - System.currentTimeMillis();
                 if (remaining <= 0) {
                     mutedPlayers.remove(playerKey);
+                    mutedReasons.remove(playerKey);
                     return;
                 }
-                player.sendMessage(ChatColor.RED + "You are muted. Time left: " + formatRemaining(remaining));
+                player.sendMessage(ChatColor.RED + "You are muted. Reason: " + ChatColor.GRAY + reason + ChatColor.RED + " Time left: " + ChatColor.GRAY + formatRemaining(remaining));
             }
         }
     }
