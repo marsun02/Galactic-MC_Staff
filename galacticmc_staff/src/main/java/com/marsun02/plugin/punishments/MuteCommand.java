@@ -3,6 +3,7 @@ package com.marsun02.plugin.punishments;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -34,7 +35,9 @@ public class MuteCommand implements CommandExecutor {
         }
 
         String targetName = args[0];
-        String targetKey = targetName.toLowerCase();
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        String canonicalName = target.getName() != null ? target.getName() : targetName;
+        String targetKey = canonicalName.toLowerCase();
         long maxAllowed = getMaxAllowedSeconds(sender);
         long durationSeconds = -1L;
         int reasonIndex = 1;

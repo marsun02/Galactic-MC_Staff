@@ -16,6 +16,9 @@ commands:
   mute:
     description: Mute a player from public chat
     usage: /<command> <player> [amount] [seconds | minutes | hours | days] [reason]
+  unmute:
+    description: Unmute a player
+    usage: /<command> <player>
 permissions:
   server.staff.staffmember:
     description: Indicates that the player is a staff member
