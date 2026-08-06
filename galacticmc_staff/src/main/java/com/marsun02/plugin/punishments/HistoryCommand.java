@@ -82,14 +82,14 @@ public class HistoryCommand implements CommandExecutor {
             String punishmentType = record.type.toLowerCase();
             ChatColor typeColor = getTypeColor(punishmentType);
 
-            sender.sendMessage(ChatColor.GRAY + "-- " + formatDuration(System.currentTimeMillis() - record.createdAt) + " ago --");
-            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + typeColor + punishmentType + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor + ChatColor.GRAY + ".");
+            sender.sendMessage(ChatColor.RED + "-- [" + ChatColor.WHITE + formatDuration(System.currentTimeMillis() - record.createdAt) + " ago" + ChatColor.RED + "] --");
+            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + typeColor + punishmentType + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor);
 
             if (!isUnbanOrUnmute(punishmentType)) {
                 sender.sendMessage(ChatColor.GRAY + "Reason: " + ChatColor.WHITE + record.reason);
-                sender.sendMessage(ChatColor.GRAY + "Status: " + (active ? ChatColor.RED + "Active" : ChatColor.DARK_GRAY + "Expired") + ChatColor.GRAY + ".");
+                sender.sendMessage(ChatColor.GRAY + "Status: " + ChatColor.WHITE + "[" + (active ? ChatColor.RED + "Active" : ChatColor.DARK_GRAY + "Expired") + ChatColor.WHITE + "]");
                 if (active && record.expiresAt != null) {
-                    sender.sendMessage(ChatColor.GRAY + "Expires in " + ChatColor.WHITE + formatDuration(record.expiresAt - System.currentTimeMillis()) + ChatColor.GRAY + ".");
+                    sender.sendMessage(ChatColor.GRAY + "Expires in: " + ChatColor.WHITE + formatDuration(record.expiresAt - System.currentTimeMillis()));
                 }
             }
 
@@ -120,24 +120,24 @@ public class HistoryCommand implements CommandExecutor {
     }
 
     private boolean isMeaningfulPunishment(String type) {
-        return !"unban".equalsIgnoreCase(type) && !"unmute".equalsIgnoreCase(type);
+        return !"unbanned".equalsIgnoreCase(type) && !"unmuted".equalsIgnoreCase(type);
     }
 
     private boolean isUnbanOrUnmute(String type) {
-        return "unban".equalsIgnoreCase(type) || "unmute".equalsIgnoreCase(type);
+        return "unbanned".equalsIgnoreCase(type) || "unmuted".equalsIgnoreCase(type);
     }
 
     private ChatColor getTypeColor(String type) {
-        if ("ban".equalsIgnoreCase(type) || "mute".equalsIgnoreCase(type)) {
+        if ("banned".equalsIgnoreCase(type) || "muted".equalsIgnoreCase(type)) {
             return ChatColor.RED;
         }
-        if ("warn".equalsIgnoreCase(type)) {
+        if ("warned".equalsIgnoreCase(type)) {
             return ChatColor.GOLD;
         }
-        if ("kick".equalsIgnoreCase(type)) {
+        if ("kicked".equalsIgnoreCase(type)) {
             return ChatColor.GRAY;
         }
-        if ("unban".equalsIgnoreCase(type) || "unmute".equalsIgnoreCase(type)) {
+        if ("unbanned".equalsIgnoreCase(type) || "unmuted".equalsIgnoreCase(type)) {
             return ChatColor.YELLOW;
         }
         return ChatColor.WHITE;
