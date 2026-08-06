@@ -13,6 +13,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.marsun02.plugin.punishments.BanCommand;
+import com.marsun02.plugin.punishments.HistoryClearCommand;
 import com.marsun02.plugin.punishments.HistoryCommand;
 import com.marsun02.plugin.punishments.KickCommand;
 import com.marsun02.plugin.punishments.MuteCommand;
@@ -50,7 +51,8 @@ public class Main extends JavaPlugin {
         getCommand("mute").setExecutor(new MuteCommand(mutedPlayers, mutedReasons, punishmentsHistory));
         getCommand("unmute").setExecutor(new UnmuteCommand(mutedPlayers, mutedReasons, punishmentsHistory));
         getCommand("warn").setExecutor(new WarnCommand(warnedPlayers, warnedReasons, punishmentsHistory));
-        getCommand("history").setExecutor(new HistoryCommand(punishmentsHistory));
+        HistoryClearCommand clearCommand = new HistoryClearCommand(punishmentsHistory, this, warnedPlayers, warnedReasons);
+        getCommand("history").setExecutor(new HistoryCommand(punishmentsHistory, clearCommand));
         
         // Register StaffChat listener
         getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers, mutedReasons), this);
@@ -167,7 +169,7 @@ public class Main extends JavaPlugin {
         }
     }
 
-    private void savePunishmentHistory() {
+    public void savePunishmentHistory() {
         FileConfiguration config = getConfig();
         config.set("history", null);
 

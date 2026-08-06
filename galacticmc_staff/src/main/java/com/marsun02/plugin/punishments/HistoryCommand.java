@@ -1,6 +1,7 @@
 package com.marsun02.plugin.punishments;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +18,15 @@ public class HistoryCommand implements CommandExecutor {
     private static final String PERMISSION = "server.staff.staffmember";
     private static final int PAGE_SIZE = 5;
     private final Map<String, List<PunishmentRecord>> punishmentsHistory;
+    private final HistoryClearCommand clearCommand;
 
     public HistoryCommand(Map<String, List<PunishmentRecord>> punishmentsHistory) {
+        this(punishmentsHistory, null);
+    }
+
+    public HistoryCommand(Map<String, List<PunishmentRecord>> punishmentsHistory, HistoryClearCommand clearCommand) {
         this.punishmentsHistory = punishmentsHistory;
+        this.clearCommand = clearCommand;
     }
 
     @Override
@@ -31,6 +38,14 @@ public class HistoryCommand implements CommandExecutor {
 
         if (args.length == 0) {
             sender.sendMessage(ChatColor.RED + "Usage: /history <player> [page]");
+            return true;
+        }
+
+        if ("clear".equalsIgnoreCase(args[0])) {
+            if (clearCommand != null) {
+                return clearCommand.onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length));
+            }
+            sender.sendMessage(ChatColor.RED + "Clear history is not configured.");
             return true;
         }
 
@@ -88,6 +103,7 @@ public class HistoryCommand implements CommandExecutor {
 
             if (!isUnbanOrUnmute(punishmentType) && !"kicked".equalsIgnoreCase(punishmentType)) {
                 sender.sendMessage(ChatColor.GRAY + "Reason: " + ChatColor.WHITE + record.reason);
+                sender.sendMessage(ChatColor.GRAY + "Duration: " + ChatColor.WHITE + getDurationText(punishmentType, record.createdAt, record.expiresAt) + ChatColor.GRAY + ".");
             }
 
             if (!isUnbanOrUnmute(punishmentType) && !"kicked".equalsIgnoreCase(punishmentType)) {
@@ -181,6 +197,16 @@ public class HistoryCommand implements CommandExecutor {
         return days + " " + (days == 1 ? "day" : "days") + ", "
             + hours + " " + (hours == 1 ? "hour" : "hours") + ", "
             + minutes + " " + (minutes == 1 ? "minute" : "minutes");
+    }
+
+    public static String getDurationText(String type, long createdAt, Long expiresAt) {
+        if ("warned".equalsIgnoreCase(type)) {
+            return "7 days";
+        }
+        if (expiresAt == null) {
+            return "permanent";
+        }
+        return formatDuration(expiresAt - createdAt);
     }
 
     public static class PunishmentRecord {

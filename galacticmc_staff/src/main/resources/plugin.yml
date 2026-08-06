@@ -26,8 +26,8 @@ commands:
     description: Warn a player (persists for 7 days)
     usage: /<command> <player> <reason>
   history:
-    description: Show a player's punishment history
-    usage: /<command> <player> [page]
+    description: Show a player's punishment history or clear it
+    usage: /<command> <player> [page] | /<command> clear <player> [amount]
 permissions:
   server.staff.staffmember:
     description: Indicates that the player is a staff member
