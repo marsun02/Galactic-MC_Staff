@@ -17,8 +17,8 @@ public class HistoryCommandTest {
 
     @Test
     public void durationFormattingShouldUseDaysHoursAndMinutes() {
-        assertEquals("0 days, 0 hours, 5 minutes", HistoryCommand.formatDuration(300_000L));
-        assertEquals("1 day, 0 hours, 3 minutes", HistoryCommand.formatDuration(86_583_000L));
+        assertEquals("5 minutes", HistoryCommand.formatDuration(300_000L));
+        assertEquals("1 day, 3 minutes, 3 seconds", HistoryCommand.formatDuration(86_583_000L));
         assertEquals("1 day, 2 hours, 3 minutes", HistoryCommand.formatDuration(93_780_000L));
     }
 }

@@ -180,7 +180,7 @@ public class HistoryCommand implements CommandExecutor {
             return ChatColor.GOLD;
         }
         if ("kicked".equalsIgnoreCase(type)) {
-            return ChatColor.GRAY;
+            return ChatColor.DARK_GRAY;
         }
         if ("unbanned".equalsIgnoreCase(type) || "unmuted".equalsIgnoreCase(type)) {
             return ChatColor.DARK_GRAY;
@@ -189,14 +189,31 @@ public class HistoryCommand implements CommandExecutor {
     }
 
     public static String formatDuration(long durationMillis) {
-        long totalMinutes = Math.max(0L, durationMillis / 60_000L);
-        long days = totalMinutes / 1440L;
-        long hours = (totalMinutes % 1440L) / 60L;
-        long minutes = totalMinutes % 60L;
+        long totalSeconds = Math.max(0L, durationMillis / 1000L);
+        long days = totalSeconds / 86_400L;
+        long hours = (totalSeconds % 86_400L) / 3_600L;
+        long minutes = (totalSeconds % 3_600L) / 60L;
+        long seconds = totalSeconds % 60L;
 
-        return days + " " + (days == 1 ? "day" : "days") + ", "
-            + hours + " " + (hours == 1 ? "hour" : "hours") + ", "
-            + minutes + " " + (minutes == 1 ? "minute" : "minutes");
+        List<String> parts = new ArrayList<>();
+        if (days > 0) {
+            parts.add(days + " " + (days == 1 ? "day" : "days"));
+        }
+        if (hours > 0) {
+            parts.add(hours + " " + (hours == 1 ? "hour" : "hours"));
+        }
+        if (minutes > 0) {
+            parts.add(minutes + " " + (minutes == 1 ? "minute" : "minutes"));
+        }
+        if (seconds > 0) {
+            parts.add(seconds + " " + (seconds == 1 ? "second" : "seconds"));
+        }
+
+        if (parts.isEmpty()) {
+            return "0 seconds";
+        }
+
+        return String.join(", ", parts);
     }
 
     public static String getDurationText(String type, long createdAt, Long expiresAt) {
