@@ -73,7 +73,7 @@ public class HistoryClearCommand implements CommandExecutor {
             plugin.savePunishmentHistory();
         }
 
-        sender.sendMessage(ChatColor.RED + "Cleared " + removedCount + " punishment history entr" + (removedCount == 1 ? "y" : "ies") + " for " + targetName + ".");
+        sender.sendMessage(ChatColor.GREEN + "Successfully cleared " + removedCount + " punishment history entr" + (removedCount == 1 ? "y" : "ies") + " for " + targetName + ".");
         return true;
     }
 

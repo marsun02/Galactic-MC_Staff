@@ -103,7 +103,7 @@ public class HistoryCommand implements CommandExecutor {
 
             if (!isUnbanOrUnmute(punishmentType) && !"kicked".equalsIgnoreCase(punishmentType)) {
                 sender.sendMessage(ChatColor.GRAY + "Reason: " + ChatColor.WHITE + record.reason);
-                sender.sendMessage(ChatColor.GRAY + "Duration: " + ChatColor.WHITE + getDurationText(punishmentType, record.createdAt, record.expiresAt) + ChatColor.GRAY + ".");
+                sender.sendMessage(ChatColor.GRAY + "Duration: " + ChatColor.WHITE + getDurationText(punishmentType, record.createdAt, record.expiresAt));
             }
 
             if (!isUnbanOrUnmute(punishmentType) && !"kicked".equalsIgnoreCase(punishmentType)) {
@@ -204,7 +204,7 @@ public class HistoryCommand implements CommandExecutor {
             return "7 days";
         }
         if (expiresAt == null) {
-            return "permanent";
+            return "Permanent";
         }
         return formatDuration(expiresAt - createdAt);
     }
