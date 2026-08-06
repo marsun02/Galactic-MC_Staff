@@ -79,8 +79,9 @@ public class HistoryCommand implements CommandExecutor {
         for (int i = startIndex; i < endIndex; i++) {
             PunishmentRecord record = displayHistory.get(i);
             boolean active = isActive(record);
-            sender.sendMessage(ChatColor.GRAY + "-- " + formatDuration(System.currentTimeMillis() - record.createdAt) + " since issued --");
-            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + ChatColor.WHITE + record.type + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor + ChatColor.GRAY + ": '" + record.reason + "' [" + (active ? "active" : "expired") + (active && record.expiresAt != null ? ", expires in " + formatDuration(record.expiresAt - System.currentTimeMillis()) : "") + "].");
+            sender.sendMessage(ChatColor.RED + "-- [" + ChatColor.WHITE + formatDuration(System.currentTimeMillis() - record.createdAt) + " ago" + ChatColor.RED + "] --");
+            sender.sendMessage(ChatColor.WHITE + targetName + " was " + ChatColor.RED + record.type + ChatColor.WHITE+ " by " + record.actor + ": '" + ChatColor.RED + record.reason + ChatColor.WHITE + "' [" + (active ? ChatColor.RED + "Active" : ChatColor.DARK_GRAY + "Expired") + ChatColor.WHITE + "]");
+            sender.sendMessage((active && record.expiresAt != null ? ChatColor.WHITE + "Expires in " + formatDuration(record.expiresAt - System.currentTimeMillis()) : "") + "].");
         }
 
         if (totalPages > 1) {
