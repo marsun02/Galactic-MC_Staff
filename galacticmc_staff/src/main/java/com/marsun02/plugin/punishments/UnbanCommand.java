@@ -44,7 +44,7 @@ public class UnbanCommand implements CommandExecutor {
         banList.pardon(targetName);
 
         String announce = ChatColor.RED + "[Unban] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " unbanned " + ChatColor.WHITE + targetName + ChatColor.RED + ".";
-        HistoryCommand.logPunishment(punishmentsHistory, targetName.toLowerCase(), "unban", sender.getName(), "No reason provided.", System.currentTimeMillis(), null, false);
+        HistoryCommand.logPunishment(punishmentsHistory, targetName.toLowerCase(), "unbanned", sender.getName(), "No reason provided.", System.currentTimeMillis(), null, false);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {

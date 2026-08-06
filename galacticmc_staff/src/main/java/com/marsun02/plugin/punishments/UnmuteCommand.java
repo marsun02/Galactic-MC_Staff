@@ -51,7 +51,7 @@ public class UnmuteCommand implements CommandExecutor {
         mutedReasons.remove(targetKey);
 
         String announce = ChatColor.RED + "[Unmute] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " unmuted " + ChatColor.WHITE + canonicalName + ChatColor.RED + ".";
-        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "unmute", sender.getName(), "No reason provided.", System.currentTimeMillis(), null, false);
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "unmuted", sender.getName(), "No reason provided.", System.currentTimeMillis(), null, false);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {

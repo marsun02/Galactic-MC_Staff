@@ -49,7 +49,7 @@ public class WarnCommand implements CommandExecutor {
 
         warnedPlayers.put(targetKey, expiry);
         warnedReasons.put(targetKey, reason);
-        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "warn", sender.getName(), reason, System.currentTimeMillis(), expiry, true);
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "warned", sender.getName(), reason, System.currentTimeMillis(), expiry, true);
 
         String announce = ChatColor.RED + "[Warn] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " warned " + ChatColor.WHITE + canonicalName + ChatColor.RED + " for: " + ChatColor.GRAY + reason;
 

@@ -135,10 +135,10 @@ public class HistoryCommand implements CommandExecutor {
             return ChatColor.GOLD;
         }
         if ("kicked".equalsIgnoreCase(type)) {
-            return ChatColor.GRAY;
+            return ChatColor.YELLOW;
         }
         if ("unbanned".equalsIgnoreCase(type) || "unmuted".equalsIgnoreCase(type)) {
-            return ChatColor.YELLOW;
+            return ChatColor.DARK_GRAY;
         }
         return ChatColor.WHITE;
     }

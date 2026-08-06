@@ -49,7 +49,7 @@ public class KickCommand implements CommandExecutor {
         target.kickPlayer(kickMessage);
 
         String announce = ChatColor.RED + "[Kick] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " kicked " + ChatColor.WHITE + target.getName() + ChatColor.RED + ". Reason: " + ChatColor.GRAY + reason;
-        HistoryCommand.logPunishment(punishmentsHistory, target.getName().toLowerCase(), "kick", sender.getName(), reason, System.currentTimeMillis(), null, false);
+        HistoryCommand.logPunishment(punishmentsHistory, target.getName().toLowerCase(), "kicked", sender.getName(), reason, System.currentTimeMillis(), null, false);
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {
                 player.sendMessage(announce);

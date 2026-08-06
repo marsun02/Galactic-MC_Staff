@@ -105,7 +105,7 @@ public class BanCommand implements CommandExecutor {
         String targetKey = targetName.toLowerCase();
         long createdAt = System.currentTimeMillis();
         Long expiresAt = permanent ? null : createdAt + durationSeconds * 1000L;
-        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "ban", sender.getName(), reason, createdAt, expiresAt, true);
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "banned", sender.getName(), reason, createdAt, expiresAt, true);
 
         // Broadcast to online staff members with the staffmember permission
         Bukkit.getOnlinePlayers().forEach(p -> {

@@ -82,7 +82,7 @@ public class MuteCommand implements CommandExecutor {
 
         long createdAt = System.currentTimeMillis();
         Long expiresAt = permanent ? null : createdAt + durationSeconds * 1000L;
-        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "mute", sender.getName(), reason, createdAt, expiresAt, true);
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "muted", sender.getName(), reason, createdAt, expiresAt, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {
