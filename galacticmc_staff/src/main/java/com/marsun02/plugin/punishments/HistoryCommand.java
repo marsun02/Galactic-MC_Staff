@@ -79,9 +79,21 @@ public class HistoryCommand implements CommandExecutor {
         for (int i = startIndex; i < endIndex; i++) {
             PunishmentRecord record = displayHistory.get(i);
             boolean active = isActive(record);
-            sender.sendMessage(ChatColor.RED + "-- [" + ChatColor.WHITE + formatDuration(System.currentTimeMillis() - record.createdAt) + " ago" + ChatColor.RED + "] --");
-            sender.sendMessage(ChatColor.WHITE + targetName + " was " + ChatColor.RED + record.type + ChatColor.WHITE+ " by " + record.actor + ": '" + ChatColor.RED + record.reason + ChatColor.WHITE + "' [" + (active ? ChatColor.RED + "Active" : ChatColor.DARK_GRAY + "Expired") + ChatColor.WHITE + "]");
-            sender.sendMessage((active && record.expiresAt != null ? ChatColor.WHITE + "Expires in " + formatDuration(record.expiresAt - System.currentTimeMillis()) : ""));
+            String punishmentType = record.type.toLowerCase();
+            ChatColor typeColor = getTypeColor(punishmentType);
+
+            sender.sendMessage(ChatColor.GRAY + "-- " + formatDuration(System.currentTimeMillis() - record.createdAt) + " ago --");
+            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + typeColor + punishmentType + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor + ChatColor.GRAY + ".");
+
+            if (!isUnbanOrUnmute(punishmentType)) {
+                sender.sendMessage(ChatColor.GRAY + "Reason: " + ChatColor.WHITE + record.reason);
+                sender.sendMessage(ChatColor.GRAY + "Status: " + (active ? ChatColor.RED + "Active" : ChatColor.DARK_GRAY + "Expired") + ChatColor.GRAY + ".");
+                if (active && record.expiresAt != null) {
+                    sender.sendMessage(ChatColor.GRAY + "Expires in " + ChatColor.WHITE + formatDuration(record.expiresAt - System.currentTimeMillis()) + ChatColor.GRAY + ".");
+                }
+            }
+
+            sender.sendMessage(" ");
         }
 
         if (totalPages > 1) {
@@ -109,6 +121,26 @@ public class HistoryCommand implements CommandExecutor {
 
     private boolean isMeaningfulPunishment(String type) {
         return !"unban".equalsIgnoreCase(type) && !"unmute".equalsIgnoreCase(type);
+    }
+
+    private boolean isUnbanOrUnmute(String type) {
+        return "unban".equalsIgnoreCase(type) || "unmute".equalsIgnoreCase(type);
+    }
+
+    private ChatColor getTypeColor(String type) {
+        if ("ban".equalsIgnoreCase(type) || "mute".equalsIgnoreCase(type)) {
+            return ChatColor.RED;
+        }
+        if ("warn".equalsIgnoreCase(type)) {
+            return ChatColor.GOLD;
+        }
+        if ("kick".equalsIgnoreCase(type)) {
+            return ChatColor.GRAY;
+        }
+        if ("unban".equalsIgnoreCase(type) || "unmute".equalsIgnoreCase(type)) {
+            return ChatColor.YELLOW;
+        }
+        return ChatColor.WHITE;
     }
 
     public static String formatDuration(long durationMillis) {
