@@ -1,5 +1,6 @@
 package com.marsun02.plugin.punishments;
 
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -14,12 +15,14 @@ import net.md_5.bungee.api.ChatColor;
 public class MuteCommand implements CommandExecutor {
 
     private static final String PERMISSION = "server.staff.staffmember";
+    private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory;
     private final Map<String, Long> mutedPlayers;
     private final Map<String, String> mutedReasons;
 
-    public MuteCommand(Map<String, Long> mutedPlayers, Map<String, String> mutedReasons) {
+    public MuteCommand(Map<String, Long> mutedPlayers, Map<String, String> mutedReasons, Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory) {
         this.mutedPlayers = mutedPlayers;
         this.mutedReasons = mutedReasons;
+        this.punishmentsHistory = punishmentsHistory;
     }
 
     @Override
@@ -76,6 +79,10 @@ public class MuteCommand implements CommandExecutor {
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
         String announce = ChatColor.RED + "[Mute] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " muted " + ChatColor.WHITE + targetName + ChatColor.RED + " " + durationText + " for: " + ChatColor.GRAY + reason;
+
+        long createdAt = System.currentTimeMillis();
+        Long expiresAt = permanent ? null : createdAt + durationSeconds * 1000L;
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "mute", sender.getName(), reason, createdAt, expiresAt, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {

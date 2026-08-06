@@ -1,5 +1,6 @@
 package com.marsun02.plugin.punishments;
 
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -14,12 +15,14 @@ import net.md_5.bungee.api.ChatColor;
 public class UnmuteCommand implements CommandExecutor {
 
     private static final String PERMISSION = "server.staff.staffmember";
+    private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory;
     private final Map<String, Long> mutedPlayers;
     private final Map<String, String> mutedReasons;
 
-    public UnmuteCommand(Map<String, Long> mutedPlayers, Map<String, String> mutedReasons) {
+    public UnmuteCommand(Map<String, Long> mutedPlayers, Map<String, String> mutedReasons, Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory) {
         this.mutedPlayers = mutedPlayers;
         this.mutedReasons = mutedReasons;
+        this.punishmentsHistory = punishmentsHistory;
     }
 
     @Override
@@ -48,6 +51,7 @@ public class UnmuteCommand implements CommandExecutor {
         mutedReasons.remove(targetKey);
 
         String announce = ChatColor.RED + "[Unmute] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " unmuted " + ChatColor.WHITE + canonicalName + ChatColor.RED + ".";
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "unmute", sender.getName(), "No reason provided.", System.currentTimeMillis(), null, false);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {

@@ -1,5 +1,8 @@
 package com.marsun02.plugin.punishments;
 
+import java.util.List;
+import java.util.Map;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,6 +15,11 @@ import net.md_5.bungee.api.ChatColor;
 public class KickCommand implements CommandExecutor {
 
     private static final String PERMISSION = "server.staff.staffmember";
+    private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory;
+
+    public KickCommand(Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory) {
+        this.punishmentsHistory = punishmentsHistory;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -41,6 +49,7 @@ public class KickCommand implements CommandExecutor {
         target.kickPlayer(kickMessage);
 
         String announce = ChatColor.RED + "[Kick] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " kicked " + ChatColor.WHITE + target.getName() + ChatColor.RED + ". Reason: " + ChatColor.GRAY + reason;
+        HistoryCommand.logPunishment(punishmentsHistory, target.getName().toLowerCase(), "kick", sender.getName(), reason, System.currentTimeMillis(), null, false);
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {
                 player.sendMessage(announce);
