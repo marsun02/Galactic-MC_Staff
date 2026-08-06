@@ -53,20 +53,34 @@ public class HistoryCommand implements CommandExecutor {
             return true;
         }
 
-        List<PunishmentRecord> displayHistory = new ArrayList<>(history);
+        List<PunishmentRecord> displayHistory = new ArrayList<>();
+        List<PunishmentRecord> meaningfulHistory = new ArrayList<>();
+        for (PunishmentRecord record : history) {
+            if (isMeaningfulPunishment(record.type)) {
+                meaningfulHistory.add(record);
+            }
+            if (shouldDisplayInHistory(record.type)) {
+                displayHistory.add(record);
+            }
+        }
         Collections.reverse(displayHistory);
-        int totalPages = (int) Math.ceil(displayHistory.size() / (double) PAGE_SIZE);
+        if (displayHistory.isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "No visible punishment history found for " + targetName + ".");
+            return true;
+        }
+
+        int totalPages = (int) Math.ceil(meaningfulHistory.size() / (double) PAGE_SIZE);
         if (page > totalPages) page = totalPages;
 
-        sender.sendMessage(ChatColor.RED + "History for " + targetName + " (Limit: " + displayHistory.size() + "):");
+        sender.sendMessage(ChatColor.RED + "History for " + targetName + " (Limit: " + meaningfulHistory.size() + "):");
 
         int startIndex = (page - 1) * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, displayHistory.size());
         for (int i = startIndex; i < endIndex; i++) {
             PunishmentRecord record = displayHistory.get(i);
             boolean active = isActive(record);
-            sender.sendMessage(ChatColor.GRAY + "-- " + formatDaysSince(record.createdAt) + " --");
-            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + ChatColor.WHITE + record.type + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor + ChatColor.GRAY + ": '" + record.reason + "' [" + (active ? "active" : "expired") + "].");
+            sender.sendMessage(ChatColor.GRAY + "-- " + formatDuration(System.currentTimeMillis() - record.createdAt) + " since issued --");
+            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + ChatColor.WHITE + record.type + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor + ChatColor.GRAY + ": '" + record.reason + "' [" + (active ? "active" : "expired") + (active && record.expiresAt != null ? ", expires in " + formatDuration(record.expiresAt - System.currentTimeMillis()) : "") + "].");
         }
 
         if (totalPages > 1) {
@@ -88,9 +102,23 @@ public class HistoryCommand implements CommandExecutor {
         return System.currentTimeMillis() < record.expiresAt;
     }
 
-    private String formatDaysSince(long createdAt) {
-        long days = (System.currentTimeMillis() - createdAt) / 86_400_000L;
-        return days + " day(s) ago";
+    public static boolean shouldDisplayInHistory(String type) {
+        return true;
+    }
+
+    private boolean isMeaningfulPunishment(String type) {
+        return !"unban".equalsIgnoreCase(type) && !"unmute".equalsIgnoreCase(type);
+    }
+
+    public static String formatDuration(long durationMillis) {
+        long totalMinutes = Math.max(0L, durationMillis / 60_000L);
+        long days = totalMinutes / 1440L;
+        long hours = (totalMinutes % 1440L) / 60L;
+        long minutes = totalMinutes % 60L;
+
+        return days + " " + (days == 1 ? "day" : "days") + ", "
+            + hours + " " + (hours == 1 ? "hour" : "hours") + ", "
+            + minutes + " " + (minutes == 1 ? "minute" : "minutes");
     }
 
     public static class PunishmentRecord {
