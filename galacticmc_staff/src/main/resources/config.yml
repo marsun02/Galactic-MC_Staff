@@ -9,3 +9,6 @@ muted: {}
 # expiry: milliseconds since epoch, use -1 for permanent.
 # reason: string explaining the warning.
 warns: {}
+
+# Punishment history storage. Stored per player and loaded on startup.
+history: {}

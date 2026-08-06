@@ -1,5 +1,8 @@
 package com.marsun02.plugin.punishments;
 
+import java.util.List;
+import java.util.Map;
+
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -12,6 +15,11 @@ import net.md_5.bungee.api.ChatColor;
 public class UnbanCommand implements CommandExecutor {
 
     private static final String PERMISSION = "server.staff.staffmember";
+    private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory;
+
+    public UnbanCommand(Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory) {
+        this.punishmentsHistory = punishmentsHistory;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -36,6 +44,7 @@ public class UnbanCommand implements CommandExecutor {
         banList.pardon(targetName);
 
         String announce = ChatColor.RED + "[Unban] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " unbanned " + ChatColor.WHITE + targetName + ChatColor.RED + ".";
+        HistoryCommand.logPunishment(punishmentsHistory, targetName.toLowerCase(), "unbanned", sender.getName(), "No reason provided.", System.currentTimeMillis(), null, false);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasPermission(PERMISSION)) {

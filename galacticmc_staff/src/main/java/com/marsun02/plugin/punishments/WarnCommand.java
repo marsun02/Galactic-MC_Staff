@@ -1,5 +1,6 @@
 package com.marsun02.plugin.punishments;
 
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -14,12 +15,14 @@ import net.md_5.bungee.api.ChatColor;
 public class WarnCommand implements CommandExecutor {
 
     private static final String PERMISSION = "server.staff.staffmember";
+    private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory;
     private final Map<String, Long> warnedPlayers;
     private final Map<String, String> warnedReasons;
 
-    public WarnCommand(Map<String, Long> warnedPlayers, Map<String, String> warnedReasons) {
+    public WarnCommand(Map<String, Long> warnedPlayers, Map<String, String> warnedReasons, Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory) {
         this.warnedPlayers = warnedPlayers;
         this.warnedReasons = warnedReasons;
+        this.punishmentsHistory = punishmentsHistory;
     }
 
     @Override
@@ -46,6 +49,7 @@ public class WarnCommand implements CommandExecutor {
 
         warnedPlayers.put(targetKey, expiry);
         warnedReasons.put(targetKey, reason);
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "warned", sender.getName(), reason, System.currentTimeMillis(), expiry, true);
 
         String announce = ChatColor.RED + "[Warn] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " warned " + ChatColor.WHITE + canonicalName + ChatColor.RED + " for: " + ChatColor.GRAY + reason;
 

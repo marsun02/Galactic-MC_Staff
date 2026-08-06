@@ -1,0 +1,270 @@
+package com.marsun02.plugin.punishments;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+
+import net.md_5.bungee.api.ChatColor;
+
+public class HistoryCommand implements CommandExecutor {
+
+    private static final String PERMISSION = "server.staff.staffmember";
+    private static final int PAGE_SIZE = 5;
+    private final Map<String, List<PunishmentRecord>> punishmentsHistory;
+    private final HistoryClearCommand clearCommand;
+
+    public HistoryCommand(Map<String, List<PunishmentRecord>> punishmentsHistory) {
+        this(punishmentsHistory, null);
+    }
+
+    public HistoryCommand(Map<String, List<PunishmentRecord>> punishmentsHistory, HistoryClearCommand clearCommand) {
+        this.punishmentsHistory = punishmentsHistory;
+        this.clearCommand = clearCommand;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof ConsoleCommandSender) && !sender.hasPermission(PERMISSION)) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
+        }
+
+        if (args.length == 0) {
+            sender.sendMessage(ChatColor.RED + "Usage: /history <player> [page]");
+            return true;
+        }
+
+        if ("clear".equalsIgnoreCase(args[0])) {
+            if (clearCommand != null) {
+                return clearCommand.onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length));
+            }
+            sender.sendMessage(ChatColor.RED + "Clear history is not configured.");
+            return true;
+        }
+
+        String targetName = args[0];
+        String targetKey = targetName.toLowerCase();
+        int page = 1;
+        if (args.length > 1) {
+            try {
+                page = Integer.parseInt(args[1]);
+                if (page < 1) page = 1;
+            } catch (NumberFormatException ignored) {
+                sender.sendMessage(ChatColor.RED + "Page must be a number.");
+                return true;
+            }
+        }
+
+        List<PunishmentRecord> history = punishmentsHistory.getOrDefault(targetKey, new ArrayList<>());
+        if (history.isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "No punishment history found for " + targetName + ".");
+            return true;
+        }
+
+        List<PunishmentRecord> displayHistory = new ArrayList<>();
+        List<PunishmentRecord> meaningfulHistory = new ArrayList<>();
+        for (PunishmentRecord record : history) {
+            if (isMeaningfulPunishment(record.type)) {
+                meaningfulHistory.add(record);
+            }
+            if (shouldDisplayInHistory(record.type)) {
+                displayHistory.add(record);
+            }
+        }
+        Collections.reverse(displayHistory);
+        if (displayHistory.isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "No visible punishment history found for " + targetName + ".");
+            return true;
+        }
+
+        int totalPages = (int) Math.ceil(meaningfulHistory.size() / (double) PAGE_SIZE);
+        if (page > totalPages) page = totalPages;
+
+        sender.sendMessage(ChatColor.RED + "History for " + targetName + " (Limit: " + meaningfulHistory.size() + "):");
+
+        int startIndex = (page - 1) * PAGE_SIZE;
+        int endIndex = Math.min(startIndex + PAGE_SIZE, displayHistory.size());
+        for (int i = startIndex; i < endIndex; i++) {
+            PunishmentRecord record = displayHistory.get(i);
+            int historyIndex = history.indexOf(record);
+            boolean active = isActive(record, history, historyIndex);
+            String punishmentType = record.type.toLowerCase();
+            ChatColor typeColor = getTypeColor(punishmentType);
+
+            sender.sendMessage(ChatColor.RED + "-- [" + ChatColor.WHITE + formatDuration(System.currentTimeMillis() - record.createdAt) + " ago" + ChatColor.RED + "] --");
+            sender.sendMessage(ChatColor.WHITE + targetName + ChatColor.GRAY + " was " + typeColor + punishmentType + ChatColor.GRAY + " by " + ChatColor.WHITE + record.actor);
+
+            if (!isUnbanOrUnmute(punishmentType) && !"kicked".equalsIgnoreCase(punishmentType)) {
+                sender.sendMessage(ChatColor.GRAY + "Reason: " + ChatColor.WHITE + record.reason);
+                sender.sendMessage(ChatColor.GRAY + "Duration: " + ChatColor.WHITE + getDurationText(punishmentType, record.createdAt, record.expiresAt));
+            }
+
+            if (!isUnbanOrUnmute(punishmentType) && !"kicked".equalsIgnoreCase(punishmentType)) {
+                sender.sendMessage(ChatColor.GRAY + "Status: " + ChatColor.WHITE + "[" + (active ? ChatColor.RED + "Active" : ChatColor.DARK_GRAY + "Expired") + ChatColor.WHITE + "]");
+            }
+
+            if (active && record.expiresAt != null && !"kicked".equalsIgnoreCase(punishmentType) && !isUnbanOrUnmute(punishmentType)) {
+                sender.sendMessage(ChatColor.GRAY + "Expires in: " + ChatColor.WHITE + formatDuration(record.expiresAt - System.currentTimeMillis()));
+            }
+
+            sender.sendMessage(" ");
+        }
+
+        if (totalPages > 1) {
+            sender.sendMessage(ChatColor.GRAY + "Page " + page + " of " + totalPages + ". Use /history " + targetName + " <page> to view another page.");
+        }
+
+        return true;
+    }
+
+    public static void logPunishment(Map<String, List<PunishmentRecord>> punishmentsHistory, String targetKey, String type, String actor, String reason, long createdAt, Long expiresAt, boolean active) {
+        punishmentsHistory.computeIfAbsent(targetKey.toLowerCase(), key -> new ArrayList<>())
+            .add(new PunishmentRecord(type, actor, reason, createdAt, expiresAt, active));
+    }
+
+    private boolean isActive(PunishmentRecord record, List<PunishmentRecord> history, int index) {
+        if (record.expiresAt == null) {
+            return !hasLaterRemoval(record, history, index);
+        }
+
+        if (hasLaterRemoval(record, history, index)) {
+            return false;
+        }
+
+        return System.currentTimeMillis() < record.expiresAt;
+    }
+
+    private boolean hasLaterRemoval(PunishmentRecord record, List<PunishmentRecord> history, int index) {
+        if (isUnbanOrUnmute(record.type)) {
+            return false;
+        }
+
+        String expectedRemoval = "banned".equalsIgnoreCase(record.type) ? "unbanned"
+            : "muted".equalsIgnoreCase(record.type) ? "unmuted" : null;
+        if (expectedRemoval == null) {
+            return false;
+        }
+
+        for (int i = index + 1; i < history.size(); i++) {
+            if (expectedRemoval.equalsIgnoreCase(history.get(i).type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean shouldDisplayInHistory(String type) {
+        return true;
+    }
+
+    private boolean isMeaningfulPunishment(String type) {
+        return !"unbanned".equalsIgnoreCase(type) && !"unmuted".equalsIgnoreCase(type);
+    }
+
+    private boolean isUnbanOrUnmute(String type) {
+        return "unbanned".equalsIgnoreCase(type) || "unmuted".equalsIgnoreCase(type);
+    }
+
+    private ChatColor getTypeColor(String type) {
+        if ("banned".equalsIgnoreCase(type) || "muted".equalsIgnoreCase(type)) {
+            return ChatColor.RED;
+        }
+        if ("warned".equalsIgnoreCase(type)) {
+            return ChatColor.GOLD;
+        }
+        if ("kicked".equalsIgnoreCase(type)) {
+            return ChatColor.DARK_GRAY;
+        }
+        if ("unbanned".equalsIgnoreCase(type) || "unmuted".equalsIgnoreCase(type)) {
+            return ChatColor.DARK_GRAY;
+        }
+        return ChatColor.WHITE;
+    }
+
+    public static String formatDuration(long durationMillis) {
+        long totalSeconds = Math.max(0L, durationMillis / 1000L);
+        long days = totalSeconds / 86_400L;
+        long hours = (totalSeconds % 86_400L) / 3_600L;
+        long minutes = (totalSeconds % 3_600L) / 60L;
+        long seconds = totalSeconds % 60L;
+
+        List<String> parts = new ArrayList<>();
+        if (days > 0) {
+            parts.add(days + " " + (days == 1 ? "day" : "days"));
+        }
+        if (hours > 0) {
+            parts.add(hours + " " + (hours == 1 ? "hour" : "hours"));
+        }
+        if (minutes > 0) {
+            parts.add(minutes + " " + (minutes == 1 ? "minute" : "minutes"));
+        }
+        if (seconds > 0) {
+            parts.add(seconds + " " + (seconds == 1 ? "second" : "seconds"));
+        }
+
+        if (parts.isEmpty()) {
+            return "0 seconds";
+        }
+
+        return String.join(", ", parts);
+    }
+
+    public static String getDurationText(String type, long createdAt, Long expiresAt) {
+        if ("warned".equalsIgnoreCase(type)) {
+            return "7 days";
+        }
+        if (expiresAt == null) {
+            return "Permanent";
+        }
+        return formatDuration(expiresAt - createdAt);
+    }
+
+    public static class PunishmentRecord {
+        private final String type;
+        private final String actor;
+        private final String reason;
+        private final long createdAt;
+        private final Long expiresAt;
+        private final boolean active;
+
+        public PunishmentRecord(String type, String actor, String reason, long createdAt, Long expiresAt, boolean active) {
+            this.type = type;
+            this.actor = actor;
+            this.reason = reason;
+            this.createdAt = createdAt;
+            this.expiresAt = expiresAt;
+            this.active = active;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getActor() {
+            return actor;
+        }
+
+        public String getReason() {
+            return reason;
+        }
+
+        public long getCreatedAt() {
+            return createdAt;
+        }
+
+        public Long getExpiresAt() {
+            return expiresAt;
+        }
+
+        public boolean isActive() {
+            return active;
+        }
+    }
+}

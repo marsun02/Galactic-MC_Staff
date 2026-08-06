@@ -3,6 +3,8 @@ package com.marsun02.plugin.punishments;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +20,12 @@ import org.bukkit.entity.Player;
 import net.md_5.bungee.api.ChatColor;
 
 public class BanCommand implements CommandExecutor {
+
+    private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory;
+
+    public BanCommand(Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory) {
+        this.punishmentsHistory = punishmentsHistory;
+    }
 
     private static final String PERM_HELPER = "server.staff.helper";
     private static final String PERM_MOD = "server.staff.mod";
@@ -93,6 +101,11 @@ public class BanCommand implements CommandExecutor {
 
         String durationText = durationSeconds > 0 ? formatDuration(durationSeconds) : "permanently";
         String announce = ChatColor.RED + "[Ban] " + ChatColor.WHITE + sender.getName() + ChatColor.RED + " banned " + ChatColor.WHITE + targetName + ChatColor.RED + " " + durationText + " for: " + ChatColor.GRAY + reason;
+
+        String targetKey = targetName.toLowerCase();
+        long createdAt = System.currentTimeMillis();
+        Long expiresAt = permanent ? null : createdAt + durationSeconds * 1000L;
+        HistoryCommand.logPunishment(punishmentsHistory, targetKey, "banned", sender.getName(), reason, createdAt, expiresAt, true);
 
         // Broadcast to online staff members with the staffmember permission
         Bukkit.getOnlinePlayers().forEach(p -> {
