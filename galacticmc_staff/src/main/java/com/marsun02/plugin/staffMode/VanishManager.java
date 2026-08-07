@@ -91,21 +91,24 @@ public class VanishManager implements Listener {
             return true;
         }
 
+        GameMode originalMode = player.getGameMode();
         originalLocations.put(uuid, player.getLocation().clone());
-        originalGameModes.put(uuid, player.getGameMode());
+        originalGameModes.put(uuid, originalMode);
         originalFlyingStates.put(uuid, player.isFlying());
         originalAllowFlightStates.put(uuid, player.getAllowFlight());
 
         player.setAllowFlight(true);
         player.setFlying(true);
         player.setInvulnerable(true);
-        player.setGameMode(GameMode.SPECTATOR);
+        player.setGameMode(originalMode);
 
         vanishedPlayers.add(uuid);
         vanishedNames.put(uuid, name);
         updateVisibility(player);
-        saveState(plugin.getConfig());
-        plugin.saveConfig();
+        if (plugin != null) {
+            saveState(plugin.getConfig());
+            plugin.saveConfig();
+        }
         player.sendMessage(ChatColor.GREEN + "You are now vanished.");
         return true;
     }
@@ -200,10 +203,15 @@ public class VanishManager implements Listener {
 
         if (!current) {
             player.setGameMode(GameMode.SPECTATOR);
+            player.setAllowFlight(true);
+            player.setFlying(true);
             player.sendMessage(ChatColor.AQUA + "Switched to spectator mode.");
         } else {
-            player.setGameMode(GameMode.SURVIVAL);
-            player.sendMessage(ChatColor.AQUA + "Returned to normal mode.");
+            GameMode originalMode = originalGameModes.getOrDefault(uuid, GameMode.SURVIVAL);
+            player.setGameMode(originalMode);
+            player.setAllowFlight(true);
+            player.setFlying(true);
+            player.sendMessage(ChatColor.AQUA + "Returned to normal vanish mode.");
         }
         return true;
     }
@@ -256,7 +264,7 @@ public class VanishManager implements Listener {
 
         for (Player target : Bukkit.getOnlinePlayers()) {
             if (vanishedPlayers.contains(player.getUniqueId())) {
-                if (target.hasPermission(ADMIN_PERMISSION) || target.hasPermission(STAFF_PERMISSION)) {
+                if (canSeeVanished(target)) {
                     target.showPlayer(plugin, player);
                 } else {
                     target.hidePlayer(plugin, player);
@@ -304,14 +312,19 @@ public class VanishManager implements Listener {
 
     private void applyStoredVanishState(Player player) {
         UUID uuid = player.getUniqueId();
+        GameMode storedMode = originalGameModes.getOrDefault(uuid, player.getGameMode());
         originalLocations.put(uuid, player.getLocation().clone());
-        originalGameModes.put(uuid, player.getGameMode());
+        originalGameModes.put(uuid, storedMode);
         originalFlyingStates.put(uuid, player.isFlying());
         originalAllowFlightStates.put(uuid, player.getAllowFlight());
 
         player.setAllowFlight(true);
         player.setFlying(true);
         player.setInvulnerable(true);
-        player.setGameMode(GameMode.SPECTATOR);
+        player.setGameMode(storedMode);
+    }
+
+    private boolean canSeeVanished(Player viewer) {
+        return viewer.hasPermission(STAFF_PERMISSION);
     }
 }
