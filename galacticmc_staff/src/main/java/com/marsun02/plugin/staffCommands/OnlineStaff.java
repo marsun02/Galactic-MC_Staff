@@ -33,7 +33,7 @@ public class OnlineStaff implements CommandExecutor {
                         .append('\n');
                 }
             }
-            sender.sendMessage(onlineStaffList.toString());
+            sender.sendMessage(onlineStaffList.toString() + "\n ");
             return true;
         }
 

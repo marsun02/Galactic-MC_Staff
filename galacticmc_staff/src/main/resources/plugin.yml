@@ -10,7 +10,6 @@ commands:
   onlinestaff:
     description: Show online staff members and their current world/server
     usage: /<command>
-    aliases: [onlineStaff]
   kick:
     description: Kick a player from the server
     usage: /<command> <player> [reason]
