@@ -23,6 +23,7 @@ import com.marsun02.plugin.punishments.WarnCommand;
 import com.marsun02.plugin.punishments.WarnListener;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
+import com.marsun02.plugin.staffCommands.OnlineStaff;
 
 public class Main extends JavaPlugin {
     private final Set<UUID> staffChatToggled = new HashSet<>();
@@ -41,8 +42,9 @@ public class Main extends JavaPlugin {
         loadWarnedPlayers();
         loadPunishmentHistory();
 
-        // Register StaffChat command
+        // Register staff commands
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
+        getCommand("onlinestaff").setExecutor(new OnlineStaff());
         
         // Register punishment commands
         getCommand("kick").setExecutor(new KickCommand(punishmentsHistory));
