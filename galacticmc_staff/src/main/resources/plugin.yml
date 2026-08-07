@@ -10,6 +10,10 @@ commands:
   staffchat:
     description: Toggle Staff Chat mode
     usage: /<command>
+  vanish:
+    description: Toggle vanish mode for staff members
+    usage: /<command> [player]
+    aliases: [v]
   kick:
     description: Kick a player from the server
     usage: /<command> <player> [reason]
