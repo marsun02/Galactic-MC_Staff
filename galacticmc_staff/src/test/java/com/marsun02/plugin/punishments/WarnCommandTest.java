@@ -9,35 +9,35 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.junit.Test;
 
-public class KickCommandTest {
+public class WarnCommandTest {
 
     @Test
-    public void reportsUsageWhenPlayerIsMissing() {
+    public void reportsUsageWhenReasonIsMissing() {
         TestCommandSender sender = new TestCommandSender("mod", true);
-        KickCommand command = new KickCommand(new HashMap<>());
+        WarnCommand command = new WarnCommand(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
-        boolean result = command.onCommand(sender, new Command("kick") {
+        boolean result = command.onCommand(sender, new Command("warn") {
             @Override
             public boolean execute(CommandSender commandSender, String label, String[] args) {
                 return true;
             }
-        }, "kick", new String[0]);
+        }, "warn", new String[] {"player"});
 
         assertTrue(result);
-        assertTrue(sender.getLastMessage().contains("Usage: /kick <player> [reason]"));
+        assertTrue(sender.getLastMessage().contains("Usage: /warn <player> <reason>"));
     }
 
     @Test
     public void deniesPermissionToRegularStaff() {
         TestCommandSender sender = new TestCommandSender("mod", false);
-        KickCommand command = new KickCommand(new HashMap<>());
+        WarnCommand command = new WarnCommand(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
-        boolean result = command.onCommand(sender, new Command("kick") {
+        boolean result = command.onCommand(sender, new Command("warn") {
             @Override
             public boolean execute(CommandSender commandSender, String label, String[] args) {
                 return true;
             }
-        }, "kick", new String[] {"player"});
+        }, "warn", new String[] {"player", "spam"});
 
         assertTrue(result);
         assertTrue(sender.getLastMessage().contains("permission"));

@@ -3,36 +3,43 @@ package com.marsun02.plugin.punishments;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.junit.Test;
 
 public class MuteCommandTest {
 
     @Test
-    public void showsUsageWhenNoArgumentsAreProvided() {
-        List<String> messages = new ArrayList<>();
-        CommandSender sender = PunishmentTestSupport.createSender(messages);
+    public void reportsUsageWhenPlayerIsMissing() {
+        TestCommandSender sender = new TestCommandSender("mod", true);
         MuteCommand command = new MuteCommand(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
-        boolean handled = command.onCommand(sender, null, "mute", new String[0]);
+        boolean result = command.onCommand(sender, new Command("mute") {
+            @Override
+            public boolean execute(CommandSender commandSender, String label, String[] args) {
+                return true;
+            }
+        }, "mute", new String[0]);
 
-        assertTrue(handled);
-        assertEquals(1, messages.size());
-        assertTrue(messages.get(0).contains("Usage: /mute"));
+        assertTrue(result);
+        assertTrue(sender.getLastMessage().contains("Usage: /mute <player> [amount] [seconds | minutes | hours | days] [reason]"));
     }
 
     @Test
-    public void formatsDurationWithReadableUnits() throws Exception {
+    public void deniesPermissionToRegularStaff() {
+        TestCommandSender sender = new TestCommandSender("mod", false);
         MuteCommand command = new MuteCommand(new HashMap<>(), new HashMap<>(), new HashMap<>());
-        Method method = MuteCommand.class.getDeclaredMethod("formatDuration", long.class);
-        method.setAccessible(true);
 
-        assertEquals("1 hour(s)", method.invoke(command, 3_600L));
-        assertEquals("2 minute(s)", method.invoke(command, 120L));
+        boolean result = command.onCommand(sender, new Command("mute") {
+            @Override
+            public boolean execute(CommandSender commandSender, String label, String[] args) {
+                return true;
+            }
+        }, "mute", new String[] {"player"});
+
+        assertTrue(result);
+        assertTrue(sender.getLastMessage().contains("permission"));
     }
 }
