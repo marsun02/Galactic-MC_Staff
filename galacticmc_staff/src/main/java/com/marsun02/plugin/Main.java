@@ -43,8 +43,8 @@ public class Main extends JavaPlugin {
         loadPunishmentHistory();
 
         // Register staff commands
+        getCommand("staff").setExecutor(new OnlineStaff());
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
-        getCommand("onlinestaff").setExecutor(new OnlineStaff());
         
         // Register punishment commands
         getCommand("kick").setExecutor(new KickCommand(punishmentsHistory));
