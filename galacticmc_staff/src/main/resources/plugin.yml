@@ -4,6 +4,9 @@ main: com.marsun02.plugin.Main
 api-version: 1.21
 author: Marsun02
 commands:
+  staff:
+    description: Show online staff members and their current world/server
+    usage: /<command>
   staffchat:
     description: Toggle Staff Chat mode
     usage: /<command>
