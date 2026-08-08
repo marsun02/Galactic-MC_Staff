@@ -82,6 +82,7 @@ public class Main extends JavaPlugin {
         savePunishmentHistory();
         if (vanishManager != null) {
             vanishManager.saveState(getConfig());
+            vanishManager.shutdown();
         }
         saveConfig();
         getLogger().info("Galactic-MC_Staff er deaktivert!");

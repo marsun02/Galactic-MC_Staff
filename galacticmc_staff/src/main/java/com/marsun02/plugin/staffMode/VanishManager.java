@@ -11,8 +11,10 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,7 +22,11 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -31,9 +37,7 @@ public class VanishManager implements Listener {
     private static final String STAFF_PERMISSION = "server.staff.staffmember";
     private static final String ADMIN_PERMISSION = "server.staff.admin";
     private static final String STAFF_VISIBILITY_TEAM = "galactic_staff_vis";
-    // Vanilla spectator players are not consistently visible to non-spectator clients.
-    // Use creative as staff observer mode so staff can always see each other.
-    private static final GameMode STAFF_OBSERVER_MODE = GameMode.CREATIVE;
+    private static final GameMode STAFF_OBSERVER_MODE = GameMode.SPECTATOR;
 
     private final JavaPlugin plugin;
     private final Set<UUID> vanishedPlayers = new HashSet<>();
@@ -43,9 +47,21 @@ public class VanishManager implements Listener {
     private final Map<UUID, Boolean> originalFlyingStates = new HashMap<>();
     private final Map<UUID, Boolean> originalAllowFlightStates = new HashMap<>();
     private final Map<UUID, Boolean> spectatorMode = new HashMap<>();
+    private final Map<UUID, ArmorStand> spectatorProxies = new HashMap<>();
+    private final BukkitTask spectatorProxyTask;
 
     public VanishManager(JavaPlugin plugin) {
         this.plugin = plugin;
+        if (plugin != null) {
+            this.spectatorProxyTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    refreshSpectatorProxies();
+                }
+            }.runTaskTimer(plugin, 1L, 2L);
+        } else {
+            this.spectatorProxyTask = null;
+        }
     }
 
     public boolean toggleVanish(Player player) {
@@ -137,6 +153,7 @@ public class VanishManager implements Listener {
         vanishedPlayers.remove(uuid);
         vanishedNames.remove(uuid);
         spectatorMode.remove(uuid);
+        removeSpectatorProxy(uuid);
         originalLocations.remove(uuid);
         originalGameModes.remove(uuid);
         originalFlyingStates.remove(uuid);
@@ -178,6 +195,7 @@ public class VanishManager implements Listener {
         }
 
         spectatorMode.remove(uuid);
+        removeSpectatorProxy(uuid);
         player.setInvulnerable(false);
         if (plugin != null) {
             saveState(plugin.getConfig());
@@ -212,6 +230,7 @@ public class VanishManager implements Listener {
             player.setGameMode(STAFF_OBSERVER_MODE);
             player.setAllowFlight(true);
             player.setFlying(true);
+            createOrUpdateSpectatorProxy(player);
             updateVisibility(player);
             player.sendMessage(ChatColor.AQUA + "Switched to spectator mode.");
         } else {
@@ -219,6 +238,7 @@ public class VanishManager implements Listener {
             player.setGameMode(originalMode);
             player.setAllowFlight(true);
             player.setFlying(true);
+            removeSpectatorProxy(uuid);
             updateVisibility(player);
             player.sendMessage(ChatColor.AQUA + "Returned to normal vanish mode.");
         }
@@ -272,6 +292,7 @@ public class VanishManager implements Listener {
         }
 
         refreshStaffVisibilityTeam();
+        refreshSpectatorProxies();
         for (Player viewer : Bukkit.getOnlinePlayers()) {
             applyVisibility(viewer, player);
         }
@@ -291,6 +312,7 @@ public class VanishManager implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
+        removeSpectatorProxy(uuid);
         if (!vanishedPlayers.contains(uuid)) {
             spectatorMode.remove(uuid);
         }
@@ -333,6 +355,10 @@ public class VanishManager implements Listener {
         player.setFlying(true);
         player.setInvulnerable(true);
         player.setGameMode(storedMode);
+
+        if (spectatorMode.getOrDefault(uuid, false)) {
+            createOrUpdateSpectatorProxy(player);
+        }
     }
 
     private void refreshAllVisibility() {
@@ -367,6 +393,106 @@ public class VanishManager implements Listener {
 
     private boolean isStaff(Player player) {
         return player.hasPermission(STAFF_PERMISSION) || player.hasPermission(ADMIN_PERMISSION);
+    }
+
+    public void shutdown() {
+        if (spectatorProxyTask != null) {
+            spectatorProxyTask.cancel();
+        }
+        for (UUID uuid : new HashSet<>(spectatorProxies.keySet())) {
+            removeSpectatorProxy(uuid);
+        }
+    }
+
+    private void createOrUpdateSpectatorProxy(Player sourcePlayer) {
+        if (plugin == null) {
+            return;
+        }
+
+        UUID uuid = sourcePlayer.getUniqueId();
+        ArmorStand stand = spectatorProxies.get(uuid);
+        Location markerLocation = sourcePlayer.getLocation().clone().add(0.0, 1.8, 0.0);
+        if (stand == null || !stand.isValid()) {
+            stand = sourcePlayer.getWorld().spawn(markerLocation, ArmorStand.class, spawned -> {
+                spawned.setVisible(false);
+                spawned.setGravity(false);
+                spawned.setMarker(true);
+                spawned.setSmall(true);
+                spawned.setInvulnerable(true);
+                spawned.setCollidable(false);
+                spawned.setSilent(true);
+                spawned.setCustomNameVisible(false);
+                spawned.setPersistent(false);
+            });
+
+            ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta skullMeta = (SkullMeta) head.getItemMeta();
+            if (skullMeta != null) {
+                skullMeta.setOwningPlayer(sourcePlayer);
+                head.setItemMeta(skullMeta);
+            }
+            if (stand.getEquipment() != null) {
+                stand.getEquipment().setHelmet(head);
+            }
+            spectatorProxies.put(uuid, stand);
+        } else {
+            stand.teleport(markerLocation);
+        }
+    }
+
+    private void removeSpectatorProxy(UUID uuid) {
+        ArmorStand stand = spectatorProxies.remove(uuid);
+        if (stand != null && stand.isValid()) {
+            stand.remove();
+        }
+    }
+
+    private void refreshSpectatorProxies() {
+        if (plugin == null) {
+            return;
+        }
+
+        for (UUID uuid : new HashSet<>(spectatorProxies.keySet())) {
+            Player sourcePlayer = getOnlinePlayer(uuid);
+            boolean active = sourcePlayer != null
+                && sourcePlayer.isOnline()
+                && vanishedPlayers.contains(uuid)
+                && spectatorMode.getOrDefault(uuid, false)
+                && sourcePlayer.getGameMode() == STAFF_OBSERVER_MODE;
+            if (!active) {
+                removeSpectatorProxy(uuid);
+            }
+        }
+
+        for (UUID uuid : spectatorMode.keySet()) {
+            if (!spectatorMode.getOrDefault(uuid, false)) {
+                continue;
+            }
+
+            Player sourcePlayer = getOnlinePlayer(uuid);
+            if (sourcePlayer == null || !sourcePlayer.isOnline() || !vanishedPlayers.contains(uuid)) {
+                continue;
+            }
+            createOrUpdateSpectatorProxy(sourcePlayer);
+        }
+
+        for (Map.Entry<UUID, ArmorStand> entry : spectatorProxies.entrySet()) {
+            UUID sourceUuid = entry.getKey();
+            ArmorStand stand = entry.getValue();
+            Player sourcePlayer = getOnlinePlayer(sourceUuid);
+            if (stand == null || !stand.isValid() || sourcePlayer == null || !sourcePlayer.isOnline()) {
+                continue;
+            }
+
+            stand.teleport(sourcePlayer.getLocation().clone().add(0.0, 1.8, 0.0));
+            for (Player viewer : Bukkit.getOnlinePlayers()) {
+                if (canSeeStealthStaff(viewer)) {
+                    viewer.showEntity(plugin, stand);
+                } else {
+                    viewer.hideEntity(plugin, stand);
+                }
+            }
+        }
     }
 
     private void refreshStaffVisibilityTeam() {
