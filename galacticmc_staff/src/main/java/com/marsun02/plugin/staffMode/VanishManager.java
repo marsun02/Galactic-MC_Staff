@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -205,12 +206,14 @@ public class VanishManager implements Listener {
             player.setGameMode(GameMode.SPECTATOR);
             player.setAllowFlight(true);
             player.setFlying(true);
+            updateVisibility(player);
             player.sendMessage(ChatColor.AQUA + "Switched to spectator mode.");
         } else {
             GameMode originalMode = originalGameModes.getOrDefault(uuid, GameMode.SURVIVAL);
             player.setGameMode(originalMode);
             player.setAllowFlight(true);
             player.setFlying(true);
+            updateVisibility(player);
             player.sendMessage(ChatColor.AQUA + "Returned to normal vanish mode.");
         }
         return true;
@@ -262,16 +265,8 @@ public class VanishManager implements Listener {
             return;
         }
 
-        for (Player target : Bukkit.getOnlinePlayers()) {
-            if (vanishedPlayers.contains(player.getUniqueId())) {
-                if (canSeeVanished(target)) {
-                    target.showPlayer(plugin, player);
-                } else {
-                    target.hidePlayer(plugin, player);
-                }
-            } else {
-                target.showPlayer(plugin, player);
-            }
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            applyVisibility(viewer, player);
         }
     }
 
@@ -280,16 +275,9 @@ public class VanishManager implements Listener {
         Player player = event.getPlayer();
         if (vanishedPlayers.contains(player.getUniqueId())) {
             applyStoredVanishState(player);
-            updateVisibility(player);
-            return;
         }
 
-        for (UUID vanished : vanishedPlayers) {
-            Player vanishedPlayer = Bukkit.getPlayer(vanished);
-            if (vanishedPlayer != null && !player.hasPermission(ADMIN_PERMISSION) && !player.hasPermission(STAFF_PERMISSION)) {
-                player.hidePlayer(plugin, vanishedPlayer);
-            }
-        }
+        refreshAllVisibility();
     }
 
     @EventHandler
@@ -310,6 +298,21 @@ public class VanishManager implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
+        Player player = event.getPlayer();
+        if (plugin == null || !isStaff(player)) {
+            return;
+        }
+
+        GameMode newMode = event.getNewGameMode();
+        if (newMode != GameMode.SPECTATOR && player.getGameMode() != GameMode.SPECTATOR) {
+            return;
+        }
+
+        plugin.getServer().getScheduler().runTask(plugin, () -> updateVisibility(player));
+    }
+
     private void applyStoredVanishState(Player player) {
         UUID uuid = player.getUniqueId();
         GameMode storedMode = originalGameModes.getOrDefault(uuid, player.getGameMode());
@@ -324,7 +327,37 @@ public class VanishManager implements Listener {
         player.setGameMode(storedMode);
     }
 
-    private boolean canSeeVanished(Player viewer) {
-        return viewer.hasPermission(STAFF_PERMISSION);
+    private void refreshAllVisibility() {
+        if (plugin == null) {
+            return;
+        }
+
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            updateVisibility(target);
+        }
+    }
+
+    private void applyVisibility(Player viewer, Player target) {
+        if (viewer.getUniqueId().equals(target.getUniqueId())) {
+            viewer.showPlayer(plugin, target);
+            return;
+        }
+
+        boolean targetVanished = vanishedPlayers.contains(target.getUniqueId());
+        boolean targetSpectatorStaff = target.getGameMode() == GameMode.SPECTATOR && isStaff(target);
+        if ((targetVanished || targetSpectatorStaff) && !canSeeStealthStaff(viewer)) {
+            viewer.hidePlayer(plugin, target);
+            return;
+        }
+
+        viewer.showPlayer(plugin, target);
+    }
+
+    private boolean canSeeStealthStaff(Player viewer) {
+        return viewer.hasPermission(STAFF_PERMISSION) || viewer.hasPermission(ADMIN_PERMISSION);
+    }
+
+    private boolean isStaff(Player player) {
+        return player.hasPermission(STAFF_PERMISSION) || player.hasPermission(ADMIN_PERMISSION);
     }
 }
