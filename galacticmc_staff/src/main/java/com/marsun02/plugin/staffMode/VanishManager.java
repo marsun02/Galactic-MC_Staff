@@ -31,6 +31,9 @@ public class VanishManager implements Listener {
     private static final String STAFF_PERMISSION = "server.staff.staffmember";
     private static final String ADMIN_PERMISSION = "server.staff.admin";
     private static final String STAFF_VISIBILITY_TEAM = "galactic_staff_vis";
+    // Vanilla spectator players are not consistently visible to non-spectator clients.
+    // Use creative as staff observer mode so staff can always see each other.
+    private static final GameMode STAFF_OBSERVER_MODE = GameMode.CREATIVE;
 
     private final JavaPlugin plugin;
     private final Set<UUID> vanishedPlayers = new HashSet<>();
@@ -206,7 +209,7 @@ public class VanishManager implements Listener {
         spectatorMode.put(uuid, !current);
 
         if (!current) {
-            player.setGameMode(GameMode.SPECTATOR);
+            player.setGameMode(STAFF_OBSERVER_MODE);
             player.setAllowFlight(true);
             player.setFlying(true);
             updateVisibility(player);
@@ -312,11 +315,6 @@ public class VanishManager implements Listener {
             return;
         }
 
-        GameMode newMode = event.getNewGameMode();
-        if (newMode != GameMode.SPECTATOR && player.getGameMode() != GameMode.SPECTATOR) {
-            return;
-        }
-
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             refreshStaffVisibilityTeam();
             updateVisibility(player);
@@ -354,7 +352,7 @@ public class VanishManager implements Listener {
         }
 
         boolean targetVanished = vanishedPlayers.contains(target.getUniqueId());
-        boolean targetSpectatorStaff = target.getGameMode() == GameMode.SPECTATOR && isStaff(target);
+        boolean targetSpectatorStaff = spectatorMode.getOrDefault(target.getUniqueId(), false) && isStaff(target);
         if ((targetVanished || targetSpectatorStaff) && !canSeeStealthStaff(viewer)) {
             viewer.hidePlayer(plugin, target);
             return;
