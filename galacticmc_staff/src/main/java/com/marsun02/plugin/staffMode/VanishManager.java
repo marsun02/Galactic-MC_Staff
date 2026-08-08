@@ -21,6 +21,8 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -28,6 +30,7 @@ public class VanishManager implements Listener {
 
     private static final String STAFF_PERMISSION = "server.staff.staffmember";
     private static final String ADMIN_PERMISSION = "server.staff.admin";
+    private static final String STAFF_VISIBILITY_TEAM = "galactic_staff_vis";
 
     private final JavaPlugin plugin;
     private final Set<UUID> vanishedPlayers = new HashSet<>();
@@ -265,6 +268,7 @@ public class VanishManager implements Listener {
             return;
         }
 
+        refreshStaffVisibilityTeam();
         for (Player viewer : Bukkit.getOnlinePlayers()) {
             applyVisibility(viewer, player);
         }
@@ -277,6 +281,7 @@ public class VanishManager implements Listener {
             applyStoredVanishState(player);
         }
 
+        refreshStaffVisibilityTeam();
         refreshAllVisibility();
     }
 
@@ -286,6 +291,8 @@ public class VanishManager implements Listener {
         if (!vanishedPlayers.contains(uuid)) {
             spectatorMode.remove(uuid);
         }
+
+        refreshStaffVisibilityTeam();
     }
 
     @EventHandler
@@ -310,7 +317,10 @@ public class VanishManager implements Listener {
             return;
         }
 
-        plugin.getServer().getScheduler().runTask(plugin, () -> updateVisibility(player));
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            refreshStaffVisibilityTeam();
+            updateVisibility(player);
+        });
     }
 
     private void applyStoredVanishState(Player player) {
@@ -359,5 +369,37 @@ public class VanishManager implements Listener {
 
     private boolean isStaff(Player player) {
         return player.hasPermission(STAFF_PERMISSION) || player.hasPermission(ADMIN_PERMISSION);
+    }
+
+    private void refreshStaffVisibilityTeam() {
+        if (plugin == null || Bukkit.getScoreboardManager() == null) {
+            return;
+        }
+
+        Scoreboard mainBoard = Bukkit.getScoreboardManager().getMainScoreboard();
+        Team team = mainBoard.getTeam(STAFF_VISIBILITY_TEAM);
+        if (team == null) {
+            team = mainBoard.registerNewTeam(STAFF_VISIBILITY_TEAM);
+        }
+        team.setCanSeeFriendlyInvisibles(true);
+
+        Set<String> staffEntries = new HashSet<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (isStaff(player)) {
+                staffEntries.add(player.getName());
+            }
+        }
+
+        for (String entry : new HashSet<>(team.getEntries())) {
+            if (!staffEntries.contains(entry)) {
+                team.removeEntry(entry);
+            }
+        }
+
+        for (String entry : staffEntries) {
+            if (!team.hasEntry(entry)) {
+                team.addEntry(entry);
+            }
+        }
     }
 }
