@@ -12,8 +12,8 @@ commands:
     usage: /<command>
   vanish:
     description: Toggle vanish mode for staff members
-    usage: /<command> [player]
-    aliases: [v]
+    usage: /<command> [player] | /<command> target <player>
+    aliases: [v, v tg]
   tpo:
     description: Teleport to a player while in staff mode
     usage: /<command> <player>
