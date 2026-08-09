@@ -24,6 +24,9 @@ import com.marsun02.plugin.punishments.WarnListener;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
 import com.marsun02.plugin.staffCommands.OnlineStaff;
+import com.marsun02.plugin.staffMode.VanishCommand;
+import com.marsun02.plugin.staffMode.VanishManager;
+import com.marsun02.plugin.staffMode.VanishToggleListener;
 
 public class Main extends JavaPlugin {
     private final Set<UUID> staffChatToggled = new HashSet<>();
@@ -32,6 +35,7 @@ public class Main extends JavaPlugin {
     private final Map<String, Long> warnedPlayers = new HashMap<>();
     private final Map<String, String> warnedReasons = new HashMap<>();
     private final Map<String, List<HistoryCommand.PunishmentRecord>> punishmentsHistory = new HashMap<>();
+    private VanishManager vanishManager;
     
     @Override
     public void onEnable(){
@@ -42,9 +46,13 @@ public class Main extends JavaPlugin {
         loadWarnedPlayers();
         loadPunishmentHistory();
 
+        vanishManager = new VanishManager(this);
+        vanishManager.loadState(getConfig());
+
         // Register staff commands
         getCommand("staff").setExecutor(new OnlineStaff());
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
+        getCommand("vanish").setExecutor(new VanishCommand(vanishManager));
         
         // Register punishment commands
         getCommand("kick").setExecutor(new KickCommand(punishmentsHistory));
@@ -60,6 +68,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new StaffChatListener(staffChatToggled, mutedPlayers, mutedReasons), this);
         // Register warn listener
         getServer().getPluginManager().registerEvents(new WarnListener(warnedPlayers, warnedReasons, this), this);
+        getServer().getPluginManager().registerEvents(vanishManager, this);
+        getServer().getPluginManager().registerEvents(new VanishToggleListener(vanishManager), this);
 
         getLogger().info("Galactic-MC_Staff er aktivert");
     }
@@ -70,6 +80,11 @@ public class Main extends JavaPlugin {
         saveMutedPlayers();
         saveWarnedPlayers();
         savePunishmentHistory();
+        if (vanishManager != null) {
+            vanishManager.saveState(getConfig());
+            vanishManager.shutdown();
+        }
+        saveConfig();
         getLogger().info("Galactic-MC_Staff er deaktivert!");
     }
 
