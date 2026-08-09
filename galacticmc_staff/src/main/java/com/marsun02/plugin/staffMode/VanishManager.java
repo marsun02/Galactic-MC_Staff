@@ -546,29 +546,29 @@ public class VanishManager implements Listener {
         }
 
         if (target != null) {
-            setLine(objective, 11, " ");
+            setLine(objective, 11, spacer(11));
             setLine(objective, 10, ChatColor.YELLOW + "Target: " + ChatColor.WHITE + target.getName());
-            setLine(objective, 9, " ");
+            setLine(objective, 9, spacer(9));
             setLine(objective, 8, ChatColor.YELLOW + "Ping: " + ChatColor.WHITE + target.getPing() + "ms");
-            setLine(objective, 7, " ");
+            setLine(objective, 7, spacer(7));
             double hp = Math.max(0.0D, target.getHealth());
             double maxHp = target.getMaxHealth();
             setLine(objective, 6, ChatColor.YELLOW + "TPS: " + ChatColor.WHITE + formatTps());
-            setLine(objective, 5, " ");
+            setLine(objective, 5, spacer(5));
             setLine(objective, 4, ChatColor.YELLOW + "Health: " + ChatColor.WHITE + formatOneDecimal(hp) + "/" + formatOneDecimal(maxHp) + " hp");
-            setLine(objective, 3, " ");
+            setLine(objective, 3, spacer(3));
             setLine(objective, 2, ChatColor.YELLOW + "Time: " + ChatColor.WHITE + LocalDateTime.now().format(DATE_TIME_FORMATTER));
-            setLine(objective, 1, " ");
+            setLine(objective, 1, spacer(1));
             return;
         }
 
-        setLine(objective, 7, " ");
+        setLine(objective, 7, spacer(7));
         setLine(objective, 6, ChatColor.YELLOW + "Target: " + ChatColor.WHITE + "None");
-        setLine(objective, 5, " ");
+        setLine(objective, 5, spacer(5));
         setLine(objective, 4, ChatColor.YELLOW + "TPS: " + ChatColor.WHITE + formatTps());
-        setLine(objective, 3, " ");
+        setLine(objective, 3, spacer(3));
         setLine(objective, 2, ChatColor.YELLOW + "Time: " + ChatColor.WHITE + LocalDateTime.now().format(DATE_TIME_FORMATTER));
-        setLine(objective, 1, " ");
+        setLine(objective, 1, spacer(1));
     }
 
     private void setLine(Objective objective, int scoreValue, String text) {
@@ -599,6 +599,13 @@ public class VanishManager implements Listener {
 
     private String formatOneDecimal(double value) {
         return String.format(java.util.Locale.US, "%.1f", value);
+    }
+
+    private String spacer(int scoreValue) {
+        // Scoreboard entries must be unique; color codes make invisible unique separators.
+        ChatColor[] colors = ChatColor.values();
+        ChatColor color = colors[Math.floorMod(scoreValue, colors.length)];
+        return color.toString() + ChatColor.RESET;
     }
 
     private void createOrUpdateSpectatorProxy(Player sourcePlayer) {
