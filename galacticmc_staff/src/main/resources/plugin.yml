@@ -14,6 +14,15 @@ commands:
     description: Toggle vanish mode for staff members
     usage: /<command> [player]
     aliases: [v]
+  tpo:
+    description: Teleport to a player while in staff mode
+    usage: /<command> <player>
+  tpohere:
+    description: Teleport a player to you while in staff mode
+    usage: /<command> <player>
+  tppos:
+    description: Teleport to coordinates while in staff mode
+    usage: /<command> <x> <y> <z>
   kick:
     description: Kick a player from the server
     usage: /<command> <player> [reason]
