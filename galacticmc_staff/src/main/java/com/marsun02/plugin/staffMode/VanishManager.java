@@ -410,6 +410,7 @@ public class VanishManager implements Listener {
         }
 
         UUID uuid = sourcePlayer.getUniqueId();
+        String proxyName = ChatColor.AQUA + sourcePlayer.getName();
         ArmorStand stand = spectatorProxies.get(uuid);
         Location markerLocation = sourcePlayer.getLocation().clone().add(0.0, 1.8, 0.0);
         if (stand == null || !stand.isValid()) {
@@ -421,7 +422,8 @@ public class VanishManager implements Listener {
                 spawned.setInvulnerable(true);
                 spawned.setCollidable(false);
                 spawned.setSilent(true);
-                spawned.setCustomNameVisible(false);
+                spawned.setCustomName(proxyName);
+                spawned.setCustomNameVisible(true);
                 spawned.setPersistent(false);
             });
 
@@ -436,6 +438,8 @@ public class VanishManager implements Listener {
             }
             spectatorProxies.put(uuid, stand);
         } else {
+            stand.setCustomName(proxyName);
+            stand.setCustomNameVisible(true);
             stand.teleport(markerLocation);
         }
     }
@@ -486,13 +490,23 @@ public class VanishManager implements Listener {
 
             stand.teleport(sourcePlayer.getLocation().clone().add(0.0, 1.8, 0.0));
             for (Player viewer : Bukkit.getOnlinePlayers()) {
-                if (canSeeStealthStaff(viewer)) {
+                if (canSeeSpectatorProxy(viewer, sourcePlayer)) {
                     viewer.showEntity(plugin, stand);
                 } else {
                     viewer.hideEntity(plugin, stand);
                 }
             }
         }
+    }
+
+    private boolean canSeeSpectatorProxy(Player viewer, Player sourcePlayer) {
+        if (!canSeeStealthStaff(viewer)) {
+            return false;
+        }
+        if (viewer.getUniqueId().equals(sourcePlayer.getUniqueId())) {
+            return false;
+        }
+        return viewer.getGameMode() != GameMode.SPECTATOR;
     }
 
     private void refreshStaffVisibilityTeam() {
