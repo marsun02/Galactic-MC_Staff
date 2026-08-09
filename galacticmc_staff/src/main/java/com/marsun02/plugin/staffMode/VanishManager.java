@@ -410,7 +410,7 @@ public class VanishManager implements Listener {
         }
 
         UUID uuid = sourcePlayer.getUniqueId();
-        String proxyName = ChatColor.AQUA + sourcePlayer.getName();
+        String proxyName = ChatColor.RED + sourcePlayer.getName();
         ArmorStand stand = spectatorProxies.get(uuid);
         Location markerLocation = sourcePlayer.getLocation().clone().add(0.0, 1.8, 0.0);
         if (stand == null || !stand.isValid()) {
