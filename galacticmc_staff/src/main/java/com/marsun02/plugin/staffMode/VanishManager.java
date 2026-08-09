@@ -7,11 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ArmorStand;
@@ -30,7 +36,6 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import net.md_5.bungee.api.ChatColor;
@@ -40,7 +45,9 @@ public class VanishManager implements Listener {
     private static final String STAFF_PERMISSION = "server.staff.staffmember";
     private static final String ADMIN_PERMISSION = "server.staff.admin";
     private static final String STAFF_VISIBILITY_TEAM = "galactic_staff_vis";
+    private static final String STAFF_MODE_OBJECTIVE = "staff_mode";
     private static final GameMode STAFF_OBSERVER_MODE = GameMode.SPECTATOR;
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy");
 
     private final JavaPlugin plugin;
     private final Set<UUID> vanishedPlayers = new HashSet<>();
@@ -51,7 +58,10 @@ public class VanishManager implements Listener {
     private final Map<UUID, Boolean> originalAllowFlightStates = new HashMap<>();
     private final Map<UUID, Boolean> spectatorMode = new HashMap<>();
     private final Map<UUID, ArmorStand> spectatorProxies = new HashMap<>();
+    private final Map<UUID, UUID> staffTargets = new HashMap<>();
+    private final Map<UUID, Scoreboard> previousScoreboards = new HashMap<>();
     private final BukkitTask spectatorProxyTask;
+    private final BukkitTask staffScoreboardTask;
 
     public VanishManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -62,8 +72,15 @@ public class VanishManager implements Listener {
                     refreshSpectatorProxies();
                 }
             }.runTaskTimer(plugin, 1L, 2L);
+            this.staffScoreboardTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    refreshStaffModeScoreboards();
+                }
+            }.runTaskTimer(plugin, 1L, 20L);
         } else {
             this.spectatorProxyTask = null;
+            this.staffScoreboardTask = null;
         }
     }
 
@@ -105,6 +122,9 @@ public class VanishManager implements Listener {
 
         vanishedPlayers.add(uuid);
         vanishedNames.put(uuid, name);
+        if (onlinePlayer != null) {
+            showStaffModeScoreboard(onlinePlayer);
+        }
         if (plugin != null) {
             saveState(plugin.getConfig());
             plugin.saveConfig();
@@ -130,6 +150,7 @@ public class VanishManager implements Listener {
 
         vanishedPlayers.add(uuid);
         vanishedNames.put(uuid, name);
+        showStaffModeScoreboard(player);
         updateVisibility(player);
         if (plugin != null) {
             saveState(plugin.getConfig());
@@ -156,6 +177,10 @@ public class VanishManager implements Listener {
         vanishedPlayers.remove(uuid);
         vanishedNames.remove(uuid);
         spectatorMode.remove(uuid);
+        staffTargets.remove(uuid);
+        if (onlinePlayer != null) {
+            hideStaffModeScoreboard(onlinePlayer);
+        }
         removeSpectatorProxy(uuid);
         originalLocations.remove(uuid);
         originalGameModes.remove(uuid);
@@ -175,6 +200,7 @@ public class VanishManager implements Listener {
 
         vanishedPlayers.remove(uuid);
         vanishedNames.remove(uuid);
+        staffTargets.remove(uuid);
         updateVisibility(player);
 
         Location originalLocation = originalLocations.remove(uuid);
@@ -198,6 +224,7 @@ public class VanishManager implements Listener {
         }
 
         spectatorMode.remove(uuid);
+        hideStaffModeScoreboard(player);
         removeSpectatorProxy(uuid);
         player.setInvulnerable(false);
         if (plugin != null) {
@@ -256,6 +283,19 @@ public class VanishManager implements Listener {
         return vanishedPlayers.contains(uuid);
     }
 
+    public boolean setTarget(Player staffPlayer, Player targetPlayer, boolean teleportToTarget) {
+        if (!isVanished(staffPlayer)) {
+            return false;
+        }
+
+        staffTargets.put(staffPlayer.getUniqueId(), targetPlayer.getUniqueId());
+        if (teleportToTarget) {
+            staffPlayer.teleport(targetPlayer.getLocation());
+        }
+        updateStaffModeScoreboard(staffPlayer);
+        return true;
+    }
+
     public String getDisplayName(UUID uuid) {
         return vanishedNames.get(uuid);
     }
@@ -306,6 +346,7 @@ public class VanishManager implements Listener {
         Player player = event.getPlayer();
         if (vanishedPlayers.contains(player.getUniqueId())) {
             applyStoredVanishState(player);
+            showStaffModeScoreboard(player);
         }
 
         refreshStaffVisibilityTeam();
@@ -315,6 +356,8 @@ public class VanishManager implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
+        hideStaffModeScoreboard(event.getPlayer());
+        staffTargets.remove(uuid);
         removeSpectatorProxy(uuid);
         if (!vanishedPlayers.contains(uuid)) {
             spectatorMode.remove(uuid);
@@ -352,6 +395,7 @@ public class VanishManager implements Listener {
             return;
         }
         if (isVanished(event.getPlayer())) {
+            setTarget(event.getPlayer(), (Player) event.getRightClicked(), false);
             event.setCancelled(true);
         }
     }
@@ -362,6 +406,7 @@ public class VanishManager implements Listener {
             return;
         }
         if (isVanished(event.getPlayer())) {
+            setTarget(event.getPlayer(), (Player) event.getRightClicked(), false);
             event.setCancelled(true);
         }
     }
@@ -435,9 +480,115 @@ public class VanishManager implements Listener {
         if (spectatorProxyTask != null) {
             spectatorProxyTask.cancel();
         }
+        if (staffScoreboardTask != null) {
+            staffScoreboardTask.cancel();
+        }
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            hideStaffModeScoreboard(player);
+        }
+
         for (UUID uuid : new HashSet<>(spectatorProxies.keySet())) {
             removeSpectatorProxy(uuid);
         }
+    }
+
+    private void showStaffModeScoreboard(Player player) {
+        if (!isVanished(player) || Bukkit.getScoreboardManager() == null) {
+            return;
+        }
+
+        previousScoreboards.putIfAbsent(player.getUniqueId(), player.getScoreboard());
+        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective(STAFF_MODE_OBJECTIVE, "dummy", ChatColor.GOLD + "Staff Mode");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        player.setScoreboard(scoreboard);
+        updateStaffModeScoreboard(player);
+    }
+
+    private void hideStaffModeScoreboard(Player player) {
+        UUID uuid = player.getUniqueId();
+        Scoreboard previous = previousScoreboards.remove(uuid);
+        if (previous != null) {
+            player.setScoreboard(previous);
+        }
+    }
+
+    private void refreshStaffModeScoreboards() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (isVanished(player)) {
+                updateStaffModeScoreboard(player);
+            }
+        }
+    }
+
+    private void updateStaffModeScoreboard(Player player) {
+        if (!isVanished(player)) {
+            return;
+        }
+
+        Scoreboard scoreboard = player.getScoreboard();
+        Objective objective = scoreboard.getObjective(STAFF_MODE_OBJECTIVE);
+        if (objective == null) {
+            showStaffModeScoreboard(player);
+            return;
+        }
+
+        for (String entry : new HashSet<>(scoreboard.getEntries())) {
+            scoreboard.resetScores(entry);
+        }
+
+        UUID targetUuid = staffTargets.get(player.getUniqueId());
+        Player target = targetUuid != null ? getOnlinePlayer(targetUuid) : null;
+        if (target == null && targetUuid != null) {
+            staffTargets.remove(player.getUniqueId());
+        }
+
+        if (target != null) {
+            setLine(objective, 10, ChatColor.YELLOW + "Target: " + ChatColor.WHITE + target.getName());
+            setLine(objective, 8, ChatColor.YELLOW + "Ping: " + ChatColor.WHITE + target.getPing() + "ms");
+            double hp = Math.max(0.0D, target.getHealth());
+            double maxHp = target.getMaxHealth();
+            setLine(objective, 6, ChatColor.YELLOW + "TPS: " + ChatColor.WHITE + formatTps());
+            setLine(objective, 4, ChatColor.YELLOW + "Health: " + ChatColor.WHITE + formatOneDecimal(hp) + "/" + formatOneDecimal(maxHp) + " hp");
+            setLine(objective, 2, ChatColor.YELLOW + "Time: " + ChatColor.WHITE + LocalDateTime.now().format(DATE_TIME_FORMATTER));
+            return;
+        }
+
+        setLine(objective, 6, ChatColor.YELLOW + "Target: " + ChatColor.WHITE + "None");
+        setLine(objective, 4, ChatColor.YELLOW + "TPS: " + ChatColor.WHITE + formatTps());
+        setLine(objective, 2, ChatColor.YELLOW + "Time: " + ChatColor.WHITE + LocalDateTime.now().format(DATE_TIME_FORMATTER));
+    }
+
+    private void setLine(Objective objective, int scoreValue, String text) {
+        String line = text;
+        if (line.length() > 40) {
+            line = line.substring(0, 40);
+        }
+        Score score = objective.getScore(line);
+        score.setScore(scoreValue);
+    }
+
+    private String formatTps() {
+        double tps = 20.0D;
+        try {
+            Object server = Bukkit.getServer();
+            if (server != null) {
+                java.lang.reflect.Method method = server.getClass().getMethod("getTPS");
+                Object value = method.invoke(server);
+                if (value instanceof double[] tpsValues && tpsValues.length > 0) {
+                    tps = Math.min(20.0D, Math.max(0.0D, tpsValues[0]));
+                }
+            }
+        } catch (ReflectiveOperationException ignored) {
+            // Keep default TPS fallback for API variants without getTPS.
+        }
+        return formatOneDecimal(tps);
+    }
+
+    private String formatOneDecimal(double value) {
+        return String.format(java.util.Locale.US, "%.1f", value);
     }
 
     private void createOrUpdateSpectatorProxy(Player sourcePlayer) {
