@@ -23,7 +23,9 @@ import com.marsun02.plugin.punishments.WarnCommand;
 import com.marsun02.plugin.punishments.WarnListener;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
+import com.marsun02.plugin.staffCommands.OfflineInventoryService;
 import com.marsun02.plugin.staffCommands.OnlineStaff;
+import com.marsun02.plugin.staffCommands.OpenContainerCommand;
 import com.marsun02.plugin.staffCommands.ReportCommand;
 import com.marsun02.plugin.staffCommands.ReportTeleportCommand;
 import com.marsun02.plugin.staffMode.StaffTeleportCommand;
@@ -51,6 +53,7 @@ public class Main extends JavaPlugin {
 
         vanishManager = new VanishManager(this);
         vanishManager.loadState(getConfig());
+        OfflineInventoryService offlineInventoryService = new OfflineInventoryService(this);
 
         // Register staff commands
         getCommand("staff").setExecutor(new OnlineStaff());
@@ -58,6 +61,9 @@ public class Main extends JavaPlugin {
         getCommand("vanish").setExecutor(new VanishCommand(vanishManager));
         getCommand("report").setExecutor(new ReportCommand(this));
         getCommand("reporttp").setExecutor(new ReportTeleportCommand());
+        OpenContainerCommand openContainerCommand = new OpenContainerCommand(offlineInventoryService);
+        getCommand("openinv").setExecutor(openContainerCommand);
+        getCommand("openender").setExecutor(openContainerCommand);
         StaffTeleportCommand staffTeleportCommand = new StaffTeleportCommand(vanishManager);
         getCommand("tpo").setExecutor(staffTeleportCommand);
         getCommand("tpohere").setExecutor(staffTeleportCommand);
@@ -79,6 +85,7 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WarnListener(warnedPlayers, warnedReasons, this), this);
         getServer().getPluginManager().registerEvents(vanishManager, this);
         getServer().getPluginManager().registerEvents(new VanishToggleListener(vanishManager), this);
+        getServer().getPluginManager().registerEvents(offlineInventoryService, this);
 
         getLogger().info("Galactic-MC_Staff er aktivert");
     }
