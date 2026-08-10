@@ -16,6 +16,12 @@ commands:
   reporttp:
     description: Teleport to a reported location
     usage: /<command> <world> <x> <y> <z>
+  openinv:
+    description: Open a player's inventory for moderation
+    usage: /<command> <player>
+  openender:
+    description: Open a player's ender chest for moderation
+    usage: /<command> <player>
   vanish:
     description: Toggle vanish mode for staff members
     usage: /<command> [player] | /<command> target <player>
