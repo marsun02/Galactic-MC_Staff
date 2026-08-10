@@ -10,6 +10,12 @@ commands:
   staffchat:
     description: Toggle Staff Chat mode
     usage: /<command>
+  report:
+    description: Report a player for rule breaking
+    usage: /<command> <player> <reason>
+  reporttp:
+    description: Teleport to a reported location
+    usage: /<command> <world> <x> <y> <z>
   vanish:
     description: Toggle vanish mode for staff members
     usage: /<command> [player] | /<command> target <player>

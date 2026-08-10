@@ -24,6 +24,8 @@ import com.marsun02.plugin.punishments.WarnListener;
 import com.marsun02.plugin.staffChat.StaffChat;
 import com.marsun02.plugin.staffChat.StaffChatListener;
 import com.marsun02.plugin.staffCommands.OnlineStaff;
+import com.marsun02.plugin.staffCommands.ReportCommand;
+import com.marsun02.plugin.staffCommands.ReportTeleportCommand;
 import com.marsun02.plugin.staffMode.StaffTeleportCommand;
 import com.marsun02.plugin.staffMode.VanishCommand;
 import com.marsun02.plugin.staffMode.VanishManager;
@@ -54,6 +56,8 @@ public class Main extends JavaPlugin {
         getCommand("staff").setExecutor(new OnlineStaff());
         getCommand("staffchat").setExecutor(new StaffChat(staffChatToggled));
         getCommand("vanish").setExecutor(new VanishCommand(vanishManager));
+        getCommand("report").setExecutor(new ReportCommand(this));
+        getCommand("reporttp").setExecutor(new ReportTeleportCommand());
         StaffTeleportCommand staffTeleportCommand = new StaffTeleportCommand(vanishManager);
         getCommand("tpo").setExecutor(staffTeleportCommand);
         getCommand("tpohere").setExecutor(staffTeleportCommand);
